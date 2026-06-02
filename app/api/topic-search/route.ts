@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { TopicResult } from '@/types/customer'
 
-export type { TopicResult }
-
 const BASE = 'https://api.intercom.io'
 
 function headers() {
@@ -33,21 +31,6 @@ export async function POST(req: NextRequest) {
           field: 'source.subject',
           operator: '~',
           value: kw,
-        },
-        sort: { field: 'updated_at', order: 'descending' },
-        pagination: { per_page: 50 },
-      }),
-    })
-
-    // Search conversations by tag containing keyword
-    const tagRes = await fetch(`${BASE}/conversations/search`, {
-      method: 'POST',
-      headers: headers(),
-      body: JSON.stringify({
-        query: {
-          field: 'tag_ids',
-          operator: 'IN',
-          value: [], // will return empty — tags need IDs not names
         },
         sort: { field: 'updated_at', order: 'descending' },
         pagination: { per_page: 50 },
