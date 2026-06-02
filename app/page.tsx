@@ -2,7 +2,6 @@
 
 import { useState, FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import SearchResults from '@/components/SearchResults'
 import TopicResults from '@/components/TopicResults'
 import type { SearchCandidate } from '@/types/customer'

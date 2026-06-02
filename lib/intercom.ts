@@ -50,7 +50,6 @@ function mapContact(raw: Record<string, unknown>): IntercomContact {
     phone: (raw.phone as string | null) ?? null,
     createdAt: (raw.created_at as number | null) ?? null,
     lastSeenAt: (raw.last_seen_at as number | null) ?? null,
-    avatar: ((raw.avatar as { image_url?: string } | null)?.image_url) ?? null,
     company: firstCompany ? { id: firstCompany.id, name: firstCompany.name } : null,
     customAttributes: (raw.custom_attributes as Record<string, string | number | boolean | null>) ?? {},
   }

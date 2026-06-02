@@ -7,7 +7,6 @@ export interface IntercomContact {
   phone: string | null
   createdAt: number | null
   lastSeenAt: number | null
-  avatar: string | null
   company: {
     id: string
     name: string

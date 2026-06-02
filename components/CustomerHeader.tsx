@@ -34,11 +34,8 @@ export default function CustomerHeader({ contact, totalConversations }: Props) {
 
       <div className="flex items-start gap-4 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
         {/* Avatar */}
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-xl font-bold text-white">
-          {contact.avatar
-            ? <img src={contact.avatar} alt="" className="h-14 w-14 rounded-full object-cover" />
-            : initials(contact.name, contact.email)
-          }
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-green-600 text-xl font-bold text-white">
+          {initials(contact.name, contact.email)}
         </div>
 
         {/* Info */}
