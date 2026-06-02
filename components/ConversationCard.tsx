@@ -38,12 +38,28 @@ function formatDuration(ts: number): string {
   return `${Math.floor(diffDays / 365)}y ago`
 }
 
-interface Props {
-  conversation: IntercomConversation
+function highlight(text: string, query: string): React.ReactNode {
+  if (!query.trim()) return text
+  const idx = text.toLowerCase().indexOf(query.toLowerCase())
+  if (idx === -1) return text
+  return (
+    <>
+      {text.slice(0, idx)}
+      <mark className="bg-yellow-200 text-yellow-900 rounded px-0.5">
+        {text.slice(idx, idx + query.length)}
+      </mark>
+      {text.slice(idx + query.length)}
+    </>
+  )
 }
 
-export default function ConversationCard({ conversation: c }: Props) {
-  const [expanded, setExpanded] = useState(false)
+interface Props {
+  conversation: IntercomConversation
+  searchQuery?: string
+}
+
+export default function ConversationCard({ conversation: c, searchQuery = '' }: Props) {
+  const [expanded, setExpanded] = useState(!!searchQuery)
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
@@ -75,7 +91,7 @@ export default function ConversationCard({ conversation: c }: Props) {
               </span>
             ))}
           </div>
-          <p className="mt-1 text-sm text-gray-500 truncate">{c.preview || '(no preview)'}</p>
+          <p className="mt-1 text-sm text-gray-500 truncate">{highlight(c.preview || '(no preview)', searchQuery)}</p>
         </div>
         <div className="shrink-0 text-right">
           <p className="text-xs font-medium text-gray-900">{formatDuration(c.updatedAt)}</p>
@@ -119,7 +135,7 @@ export default function ConversationCard({ conversation: c }: Props) {
               ) : msg.type === 'close' ? (
                 <p className="text-gray-400 italic">Conversation closed</p>
               ) : (
-                <p className="text-gray-700 whitespace-pre-wrap">{msg.body}</p>
+                <p className="text-gray-700 whitespace-pre-wrap">{highlight(msg.body, searchQuery)}</p>
               )}
               {msg.attachments.length > 0 && (
                 <div className="mt-1 flex flex-wrap gap-2">
