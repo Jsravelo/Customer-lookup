@@ -82,6 +82,18 @@ export interface SearchCandidate {
   company: string | null
 }
 
+// ─── Topic search ─────────────────────────────────────────────────────────────
+
+export interface TopicResult {
+  intercomId: string
+  name: string | null
+  email: string | null
+  company: string | null
+  conversationCount: number
+  latestConversationDate: number
+  matchingSubjects: string[]
+}
+
 // ─── Unified profile ─────────────────────────────────────────────────────────
 
 export interface CustomerProfile {

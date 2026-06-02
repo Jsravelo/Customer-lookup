@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
+import type { TopicResult } from '@/types/customer'
+
+export type { TopicResult }
 
 const BASE = 'https://api.intercom.io'
 
@@ -9,16 +12,6 @@ function headers() {
     'Content-Type': 'application/json',
     'Intercom-Version': '2.11',
   }
-}
-
-export interface TopicResult {
-  intercomId: string
-  name: string | null
-  email: string | null
-  company: string | null
-  conversationCount: number
-  latestConversationDate: number
-  matchingSubjects: string[]
 }
 
 export async function POST(req: NextRequest) {

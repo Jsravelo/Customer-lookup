@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import type { IntercomConversation } from '@/types/customer'
 
 const CHANNEL_ICONS: Record<string, string> = {

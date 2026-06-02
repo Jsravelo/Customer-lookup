@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import type { TopicResult } from '@/app/api/topic-search/route'
+import type { TopicResult } from '@/types/customer'
 
 function formatDate(ts: number): string {
   return new Date(ts * 1000).toLocaleDateString('en-US', {

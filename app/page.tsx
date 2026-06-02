@@ -6,7 +6,7 @@ import Link from 'next/link'
 import SearchResults from '@/components/SearchResults'
 import TopicResults from '@/components/TopicResults'
 import type { SearchCandidate } from '@/types/customer'
-import type { TopicResult } from '@/app/api/topic-search/route'
+import type { TopicResult } from '@/types/customer'
 
 type Mode = 'customer' | 'topic'
 
