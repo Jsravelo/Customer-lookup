@@ -16,29 +16,62 @@ function matchesQuery(c: IntercomConversation, query: string): boolean {
   return false
 }
 
-function analyzeTopics(conversations: IntercomConversation[]) {
-  const tagCounts: Record<string, number> = {}
-  const subjectCounts: Record<string, number> = {}
+// ─── Phrase analysis ──────────────────────────────────────────────────────────
 
-  conversations.forEach((c) => {
-    c.tags.forEach((tag) => {
-      tagCounts[tag] = (tagCounts[tag] || 0) + 1
-    })
-    if (c.subject) {
-      const normalized = c.subject.trim()
-      if (normalized) subjectCounts[normalized] = (subjectCounts[normalized] || 0) + 1
+const STOP_WORDS = new Set([
+  'i','me','my','myself','we','our','ours','you','your','yours','he','him','his',
+  'she','her','hers','it','its','they','them','their','what','which','who','whom',
+  'this','that','these','those','am','is','are','was','were','be','been','being',
+  'have','has','had','do','does','did','a','an','the','and','but','if','or','as',
+  'until','while','of','at','by','for','with','about','into','through','before',
+  'after','to','from','up','down','in','out','on','off','over','under','then',
+  'here','there','when','where','why','how','all','both','each','few','more',
+  'most','other','some','such','no','nor','not','only','same','so','than','too',
+  'very','can','will','just','should','now','would','could','may','might','must',
+  'hi','hello','hey','thanks','thank','please','help','get','let','know','see',
+  'look','use','also','back','still','way','even','well','like','make','want',
+  'good','new','work','much','any','going','one','two','go','via','able','really',
+  'though','since','yes','okay','ok','sure','great','sorry','today','us','re',
+  'dont','doesnt','cant','wont','isnt','wasnt','havent','hasnt','im','ive','id',
+])
+
+function extractWords(text: string): string[] {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .split(/\s+/)
+    .filter((w) => w.length >= 4 && !STOP_WORDS.has(w))
+}
+
+function analyzeTopics(conversations: IntercomConversation[]): [string, number][] {
+  const phraseCounts: Record<string, number> = {}
+
+  for (const conv of conversations) {
+    const allText = [
+      conv.subject ?? '',
+      ...conv.messages.map((m) => m.body),
+    ].join(' ')
+
+    const words = extractWords(allText)
+    const convPhrases = new Set<string>()
+
+    // 2-grams and 3-grams
+    for (let i = 0; i < words.length - 1; i++) {
+      convPhrases.add(`${words[i]} ${words[i + 1]}`)
+      if (i < words.length - 2) {
+        convPhrases.add(`${words[i]} ${words[i + 1]} ${words[i + 2]}`)
+      }
     }
-  })
 
-  const recurringTags = Object.entries(tagCounts)
+    for (const phrase of convPhrases) {
+      phraseCounts[phrase] = (phraseCounts[phrase] || 0) + 1
+    }
+  }
+
+  return Object.entries(phraseCounts)
     .filter(([, count]) => count >= 2)
     .sort((a, b) => b[1] - a[1])
-
-  const recurringSubjects = Object.entries(subjectCounts)
-    .filter(([, count]) => count >= 2)
-    .sort((a, b) => b[1] - a[1])
-
-  return { recurringTags, recurringSubjects }
+    .slice(0, 8)
 }
 
 // ─── Recurring topics panel ───────────────────────────────────────────────────
@@ -50,12 +83,7 @@ function RecurringTopics({
   conversations: IntercomConversation[]
   onTopicClick: (topic: string) => void
 }) {
-  const { recurringTags, recurringSubjects } = useMemo(
-    () => analyzeTopics(conversations),
-    [conversations]
-  )
-
-  const hasAny = recurringTags.length > 0 || recurringSubjects.length > 0
+  const phrases = useMemo(() => analyzeTopics(conversations), [conversations])
 
   return (
     <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
@@ -65,30 +93,19 @@ function RecurringTopics({
         </svg>
         Recurring topics
       </p>
-      {!hasAny ? (
-        <p className="text-xs text-amber-700">No recurring topics detected in the last 20 conversations.</p>
+      {phrases.length === 0 ? (
+        <p className="text-xs text-amber-700">No recurring topics detected across these conversations.</p>
       ) : (
         <div className="flex flex-wrap gap-1.5">
-          {recurringTags.map(([tag, count]) => (
+          {phrases.map(([phrase, count]) => (
             <button
-              key={tag}
-              onClick={() => onTopicClick(tag)}
+              key={phrase}
+              onClick={() => onTopicClick(phrase)}
               className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-900 hover:bg-amber-200 transition-colors"
-              title={`Click to filter conversations by "${tag}"`}
+              title={`Appears in ${count} conversations — click to filter`}
             >
-              {tag}
+              {phrase}
               <span className="rounded-full bg-amber-300 px-1.5 text-amber-900">{count}×</span>
-            </button>
-          ))}
-          {recurringSubjects.map(([subject, count]) => (
-            <button
-              key={subject}
-              onClick={() => onTopicClick(subject)}
-              className="inline-flex items-center gap-1 rounded-full bg-orange-100 px-2.5 py-1 text-xs font-medium text-orange-900 hover:bg-orange-200 transition-colors"
-              title={`Click to filter conversations by "${subject}"`}
-            >
-              {subject}
-              <span className="rounded-full bg-orange-300 px-1.5 text-orange-900">{count}×</span>
             </button>
           ))}
         </div>
