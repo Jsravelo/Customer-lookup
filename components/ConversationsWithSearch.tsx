@@ -135,12 +135,6 @@ export default function ConversationsWithSearch({
         </span>
       </h2>
 
-      {/* Recurring topics */}
-      <RecurringTopics
-        conversations={conversations}
-        onTopicClick={(topic) => setQuery(topic)}
-      />
-
       {/* Search input */}
       <div className="relative mb-3">
         <svg
