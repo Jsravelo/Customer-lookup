@@ -34,7 +34,7 @@ function formatDuration(seconds: number): string {
 function ActivityRow({ a }: { a: CloseActivity }) {
   const [expanded, setExpanded] = useState(false)
   const hasBody = !!(a.body || a.note)
-  const isExpandable = a.type === 'Email' || a.type === 'Note'
+  const isExpandable = a.type === 'Email' || a.type === 'Note' || a.type === 'SMS'
 
   return (
     <div className="py-2">

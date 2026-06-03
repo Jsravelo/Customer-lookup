@@ -91,6 +91,7 @@ interface RawActivity {
   note?: string
   subject?: string
   body_text?: string
+  body?: string
   direction?: string
   duration?: number
   status?: string
@@ -107,7 +108,7 @@ function mapActivity(raw: RawActivity): CloseActivity {
     date: raw.date_created,
     note: raw.note,
     subject: raw.subject,
-    body: raw.body_text,
+    body: raw.body_text ?? raw.body,
     direction: raw.direction as CloseActivity['direction'],
     duration: raw.duration,
     outcome: raw.disposition ?? raw.status,
