@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
 
     const contactMap = new Map<string, TopicResult>()
 
-    async function processConversations(res: Response) {
+    const processConversations = async (res: Response) => {
       if (!res.ok) return
       const data = await res.json()
       const conversations = data.conversations ?? []
