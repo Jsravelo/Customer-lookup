@@ -58,8 +58,11 @@ interface Props {
   searchQuery?: string
 }
 
+const ACTION_TYPES = new Set(['assignment', 'open', 'close'])
+
 export default function ConversationCard({ conversation: c, searchQuery = '' }: Props) {
   const [expanded, setExpanded] = useState(!!searchQuery)
+  const messages = c.messages.filter((m) => !ACTION_TYPES.has(m.type))
 
   return (
     <div className="rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
@@ -110,10 +113,10 @@ export default function ConversationCard({ conversation: c, searchQuery = '' }: 
       {/* Expanded messages */}
       {expanded && (
         <div className="border-t border-gray-100 divide-y divide-gray-50 max-h-[500px] overflow-y-auto">
-          {c.messages.length === 0 && (
+          {messages.length === 0 && (
             <p className="px-4 py-3 text-sm text-gray-400">No messages in thread.</p>
           )}
-          {c.messages.map((msg) => (
+          {messages.map((msg) => (
             <div
               key={msg.id}
               className={`px-4 py-3 text-sm ${
@@ -128,15 +131,7 @@ export default function ConversationCard({ conversation: c, searchQuery = '' }: 
                 </span>
                 <span className="text-xs text-gray-400 shrink-0">{formatDate(msg.createdAt)}</span>
               </div>
-              {msg.type === 'assignment' ? (
-                <p className="text-gray-400 italic">Conversation assigned</p>
-              ) : msg.type === 'open' ? (
-                <p className="text-green-600 italic">Conversation reopened</p>
-              ) : msg.type === 'close' ? (
-                <p className="text-gray-400 italic">Conversation closed</p>
-              ) : (
-                <p className="text-gray-700 whitespace-pre-wrap">{highlight(msg.body, searchQuery)}</p>
-              )}
+              <p className="text-gray-700 whitespace-pre-wrap">{highlight(msg.body, searchQuery)}</p>
               {msg.attachments.length > 0 && (
                 <div className="mt-1 flex flex-wrap gap-2">
                   {msg.attachments.map((a) => (
