@@ -63,7 +63,7 @@ function analyzeTopics(conversations: IntercomConversation[]): [string, number][
       }
     }
 
-    for (const phrase of convPhrases) {
+    for (const phrase of Array.from(convPhrases)) {
       phraseCounts[phrase] = (phraseCounts[phrase] || 0) + 1
     }
   }
