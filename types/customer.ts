@@ -45,6 +45,7 @@ export interface CloseActivity {
   date: string
   note?: string
   subject?: string
+  body?: string
   direction?: 'inbound' | 'outbound'
   duration?: number
   outcome?: string

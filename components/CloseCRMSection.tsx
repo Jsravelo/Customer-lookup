@@ -1,3 +1,6 @@
+'use client'
+
+import { useState } from 'react'
 import type { CloseLead, CloseActivity } from '@/types/customer'
 
 interface Props {
@@ -29,28 +32,52 @@ function formatDuration(seconds: number): string {
 }
 
 function ActivityRow({ a }: { a: CloseActivity }) {
+  const [expanded, setExpanded] = useState(false)
+  const hasBody = !!(a.body || a.note)
+  const isExpandable = a.type === 'Email' || a.type === 'Note'
+
   return (
-    <div className="flex items-start gap-3 py-2">
-      <span className="mt-0.5 text-base shrink-0">{ACTIVITY_ICONS[a.type] ?? '•'}</span>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-sm font-medium text-gray-900">{a.type}</span>
-          {a.direction && (
-            <span className="text-xs text-gray-400">{a.direction}</span>
+    <div className="py-2">
+      <button
+        className={`w-full flex items-start gap-3 text-left ${isExpandable && hasBody ? 'cursor-pointer' : 'cursor-default'}`}
+        onClick={() => { if (isExpandable && hasBody) setExpanded(!expanded) }}
+      >
+        <span className="mt-0.5 text-base shrink-0">{ACTIVITY_ICONS[a.type] ?? '•'}</span>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm font-medium text-gray-900">{a.type}</span>
+            {a.direction && (
+              <span className="text-xs text-gray-400">{a.direction}</span>
+            )}
+            {a.outcome && (
+              <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{a.outcome}</span>
+            )}
+            {a.duration != null && (
+              <span className="text-xs text-gray-400">{formatDuration(a.duration)}</span>
+            )}
+          </div>
+          {a.subject && <p className="text-sm text-gray-700 font-medium truncate">{a.subject}</p>}
+          {!expanded && (a.body || a.note) && (
+            <p className="mt-0.5 text-sm text-gray-500 line-clamp-2">{a.body || a.note}</p>
           )}
-          {a.outcome && (
-            <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">{a.outcome}</span>
-          )}
-          {a.duration != null && (
-            <span className="text-xs text-gray-400">{formatDuration(a.duration)}</span>
-          )}
+          <p className="mt-0.5 text-xs text-gray-400">
+            {formatDate(a.date)}{a.createdBy ? ` · ${a.createdBy}` : ''}
+          </p>
         </div>
-        {a.subject && <p className="text-sm text-gray-600 truncate">{a.subject}</p>}
-        {a.note && <p className="mt-0.5 text-sm text-gray-500 line-clamp-2">{a.note}</p>}
-        <p className="mt-0.5 text-xs text-gray-400">
-          {formatDate(a.date)}{a.createdBy ? ` · ${a.createdBy}` : ''}
-        </p>
-      </div>
+        {isExpandable && hasBody && (
+          <svg
+            className={`mt-1 h-4 w-4 shrink-0 text-gray-400 transition-transform ${expanded ? 'rotate-90' : ''}`}
+            fill="none" viewBox="0 0 24 24" stroke="currentColor"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        )}
+      </button>
+      {expanded && (a.body || a.note) && (
+        <div className="ml-7 mt-2 rounded-lg bg-gray-50 border border-gray-100 px-3 py-2 text-sm text-gray-700 whitespace-pre-wrap">
+          {a.body || a.note}
+        </div>
+      )}
     </div>
   )
 }
