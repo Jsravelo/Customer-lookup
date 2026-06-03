@@ -20,38 +20,10 @@ export async function POST(req: NextRequest) {
   }
 
   const kw = keyword.trim()
+  // Split multi-word queries so "checklist print" finds conversations mentioning either word
+  const searchTerms = kw.split(/\s+/).filter((w) => w.length >= 2)
 
   try {
-    // Search conversations by subject containing keyword
-    const subjectRes = await fetch(`${BASE}/conversations/search`, {
-      method: 'POST',
-      headers: headers(),
-      body: JSON.stringify({
-        query: {
-          field: 'source.subject',
-          operator: '~',
-          value: kw,
-        },
-        sort: { field: 'updated_at', order: 'descending' },
-        pagination: { per_page: 50 },
-      }),
-    })
-
-    // Also try body search (may or may not be supported depending on plan)
-    const bodyRes = await fetch(`${BASE}/conversations/search`, {
-      method: 'POST',
-      headers: headers(),
-      body: JSON.stringify({
-        query: {
-          field: 'source.body',
-          operator: '~',
-          value: kw,
-        },
-        sort: { field: 'updated_at', order: 'descending' },
-        pagination: { per_page: 50 },
-      }),
-    })
-
     const contactMap = new Map<string, TopicResult>()
 
     const processConversations = async (res: Response) => {
@@ -78,7 +50,6 @@ export async function POST(req: NextRequest) {
               existing.matchingSubjects.push(subject)
             }
           } else {
-            // Fetch contact details
             try {
               const contactRes = await fetch(`${BASE}/contacts/${contactId}`, { headers: headers() })
               if (!contactRes.ok) continue
@@ -102,10 +73,32 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    await Promise.all([
-      processConversations(subjectRes),
-      processConversations(bodyRes),
-    ])
+    // Search each word separately (subject + body) so "checklist print" finds
+    // conversations mentioning checklist OR print, not just the exact phrase
+    const fetches: Promise<void>[] = []
+    for (const term of searchTerms) {
+      const subjectRes = fetch(`${BASE}/conversations/search`, {
+        method: 'POST',
+        headers: headers(),
+        body: JSON.stringify({
+          query: { field: 'source.subject', operator: '~', value: term },
+          sort: { field: 'updated_at', order: 'descending' },
+          pagination: { per_page: 50 },
+        }),
+      })
+      const bodyRes = fetch(`${BASE}/conversations/search`, {
+        method: 'POST',
+        headers: headers(),
+        body: JSON.stringify({
+          query: { field: 'source.body', operator: '~', value: term },
+          sort: { field: 'updated_at', order: 'descending' },
+          pagination: { per_page: 50 },
+        }),
+      })
+      fetches.push(subjectRes.then((r) => processConversations(r)))
+      fetches.push(bodyRes.then((r) => processConversations(r)))
+    }
+    await Promise.all(fetches)
 
     const results = Array.from(contactMap.values())
       .sort((a, b) => b.conversationCount - a.conversationCount || b.latestConversationDate - a.latestConversationDate)

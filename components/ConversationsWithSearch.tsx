@@ -44,34 +44,29 @@ function extractWords(text: string): string[] {
 }
 
 function analyzeTopics(conversations: IntercomConversation[]): [string, number][] {
-  const phraseCounts: Record<string, number> = {}
+  const wordCounts: Record<string, number> = {}
 
   for (const conv of conversations) {
-    const allText = [
-      conv.subject ?? '',
-      ...conv.messages.map((m) => m.body),
-    ].join(' ')
+    // Only look at what the customer wrote — skip bot and admin messages
+    const customerText = conv.messages
+      .filter((m) => m.authorType === 'user')
+      .map((m) => m.body)
+      .join(' ')
 
-    const words = extractWords(allText)
-    const convPhrases = new Set<string>()
+    const text = [conv.subject ?? '', customerText].join(' ')
+    const words = extractWords(text)
 
-    // 2-grams and 3-grams
-    for (let i = 0; i < words.length - 1; i++) {
-      convPhrases.add(`${words[i]} ${words[i + 1]}`)
-      if (i < words.length - 2) {
-        convPhrases.add(`${words[i]} ${words[i + 1]} ${words[i + 2]}`)
-      }
-    }
-
-    for (const phrase of Array.from(convPhrases)) {
-      phraseCounts[phrase] = (phraseCounts[phrase] || 0) + 1
+    // Count each unique word once per conversation (not per occurrence)
+    const convWords = new Set(words)
+    for (const word of Array.from(convWords)) {
+      wordCounts[word] = (wordCounts[word] || 0) + 1
     }
   }
 
-  return Object.entries(phraseCounts)
+  return Object.entries(wordCounts)
     .filter(([, count]) => count >= 2)
     .sort((a, b) => b[1] - a[1])
-    .slice(0, 8)
+    .slice(0, 10)
 }
 
 // ─── Recurring topics panel ───────────────────────────────────────────────────
