@@ -4,7 +4,6 @@ import {
   searchContactsByName,
   getContactById,
 } from '@/lib/intercom'
-import { searchLeadByName } from '@/lib/close'
 import type { SearchCandidate } from '@/types/customer'
 
 export async function POST(req: NextRequest) {
@@ -41,13 +40,9 @@ export async function POST(req: NextRequest) {
       candidates = await searchContactsByEmail(trimmed)
     }
 
-    // Name/company search — try both Intercom and Close in parallel
+    // Name/company search
     if (candidates.length === 0) {
-      const [intercomResults] = await Promise.all([
-        searchContactsByName(trimmed),
-        searchLeadByName(trimmed), // used to validate Close has a record, not returned here
-      ])
-      candidates = intercomResults
+      candidates = await searchContactsByName(trimmed)
     }
 
     // Deduplicate by intercomId
