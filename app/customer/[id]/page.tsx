@@ -6,6 +6,7 @@ import { getFullLeadByEmail } from '@/lib/close'
 import CustomerHeader from '@/components/CustomerHeader'
 import ConversationsWithSearch from '@/components/ConversationsWithSearch'
 import CloseCRMSection from '@/components/CloseCRMSection'
+import AskClaude from '@/components/AskClaude'
 import { ConversationsSkeleton, CloseSkeleton } from '@/components/Skeleton'
 
 // ─── Async sub-components (stream in via Suspense) ────────────────────────────
@@ -50,6 +51,12 @@ export default async function CustomerPage({ params }: PageProps) {
 
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">
       <CustomerHeader contact={contact} />
+
+      {contact.email && (
+        <div className="mb-6">
+          <AskClaude email={contact.email} />
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Conversations — streams in */}
