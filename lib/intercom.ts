@@ -164,6 +164,17 @@ export async function getConversationsByContactId(
   return results
 }
 
+export async function countConversations(contactId: string): Promise<number> {
+  const raw = await post<{ total_count: number }>('/conversations/search', {
+    query: {
+      operator: 'AND',
+      value: [{ field: 'contact_ids', operator: 'IN', value: [contactId] }],
+    },
+    pagination: { per_page: 1 },
+  })
+  return raw.total_count ?? 0
+}
+
 // Lightweight listing for the Ask Claude tool loop — one search call, no
 // per-conversation thread fetches.
 export interface ConversationSummary {

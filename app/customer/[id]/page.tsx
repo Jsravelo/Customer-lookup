@@ -1,7 +1,6 @@
 import { Suspense } from 'react'
 import { notFound } from 'next/navigation'
-import { getContactById } from '@/lib/intercom'
-import { getConversationsByContactId } from '@/lib/intercom'
+import { getContactById, getConversationsByContactId, countConversations } from '@/lib/intercom'
 import { getFullLeadByEmail } from '@/lib/close'
 import CustomerHeader from '@/components/CustomerHeader'
 import ConversationsWithSearch from '@/components/ConversationsWithSearch'
@@ -61,6 +60,8 @@ export default async function CustomerPage({ params }: PageProps) {
   }
   if (!contact) notFound()
 
+  const totalConversations = await countConversations(params.id).catch(() => undefined)
+
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
       {/* Nav bar */}
@@ -75,7 +76,7 @@ export default async function CustomerPage({ params }: PageProps) {
       </header>
 
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">
-      <CustomerHeader contact={contact} />
+      <CustomerHeader contact={contact} totalConversations={totalConversations} />
 
       {contact.email && (
         <div className="mb-6">
