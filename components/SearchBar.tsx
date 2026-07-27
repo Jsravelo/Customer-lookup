@@ -57,12 +57,12 @@ export default function SearchBar({ onResults, onLoading }: Props) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Email, name, Intercom ID, or company..."
-          className="flex-1 rounded-lg border border-gray-300 px-4 py-3 text-base shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+          className="flex-1 rounded-lg border border-gray-300 px-4 py-3 text-base shadow-sm focus:border-zen-500 focus:outline-none focus:ring-2 focus:ring-zen-200"
           autoFocus
         />
         <button
           type="submit"
-          className="rounded-lg bg-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 active:bg-indigo-700 disabled:opacity-50"
+          className="rounded-lg bg-zen-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-zen-500 focus:outline-none focus:ring-2 focus:ring-zen-500 active:bg-zen-700 disabled:opacity-50"
         >
           Search
         </button>

@@ -73,11 +73,11 @@ export default function HomePage() {
         <div className="mx-auto flex max-w-4xl items-center justify-between">
           <div className="flex items-center gap-3">
             {/* ZenMaid logo mark */}
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-600 text-white font-bold text-sm">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zen-500 text-white font-bold text-sm">
               Z
             </div>
             <div>
-              <p className="text-xs font-medium text-green-700 leading-none">ZenMaid</p>
+              <p className="text-xs font-medium text-zen-600 leading-none">ZenMaid</p>
               <p className="text-sm font-semibold text-gray-900 leading-tight">Customer Lookup</p>
             </div>
           </div>
@@ -105,7 +105,7 @@ export default function HomePage() {
               onClick={() => switchMode('customer')}
               className={`flex-1 rounded-lg py-2.5 text-sm font-medium transition-all ${
                 mode === 'customer'
-                  ? 'bg-green-600 text-white shadow-sm'
+                  ? 'bg-zen-500 text-white shadow-sm'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
@@ -115,7 +115,7 @@ export default function HomePage() {
               onClick={() => switchMode('topic')}
               className={`flex-1 rounded-lg py-2.5 text-sm font-medium transition-all ${
                 mode === 'topic'
-                  ? 'bg-green-600 text-white shadow-sm'
+                  ? 'bg-zen-500 text-white shadow-sm'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
@@ -124,7 +124,7 @@ export default function HomePage() {
           </div>
 
           {/* Context hint */}
-          <div className="mb-4 rounded-lg bg-green-50 border border-green-100 px-4 py-3 text-sm text-green-800">
+          <div className="mb-4 rounded-lg bg-zen-50 border border-zen-100 px-4 py-3 text-sm text-zen-800">
             {mode === 'customer' ? (
               <p>
                 <strong>Find a Customer</strong> — enter their email, full name, Intercom ID, or company name.
@@ -149,13 +149,13 @@ export default function HomePage() {
                   ? 'Email, name, Intercom ID, or company...'
                   : 'Feature or topic (e.g. "booking form", "payroll")...'
               }
-              className="flex-1 rounded-lg border border-gray-300 px-4 py-3 text-sm shadow-sm focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-200"
+              className="flex-1 rounded-lg border border-gray-300 px-4 py-3 text-sm shadow-sm focus:border-zen-500 focus:outline-none focus:ring-2 focus:ring-zen-200"
               autoFocus
             />
             <button
               type="submit"
               disabled={loading}
-              className="rounded-lg bg-green-600 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-green-500 active:bg-green-700 disabled:opacity-50 transition-colors focus:outline-none focus:ring-2 focus:ring-green-500"
+              className="rounded-lg bg-zen-500 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-zen-500 active:bg-zen-600 disabled:opacity-50 transition-colors focus:outline-none focus:ring-2 focus:ring-zen-500"
             >
               {loading ? (
                 <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
@@ -186,7 +186,7 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="border-t border-gray-200 bg-white py-4 text-center">
         <div className="flex items-center justify-center gap-2 text-xs text-gray-400">
-          <div className="flex h-5 w-5 items-center justify-center rounded bg-green-600 text-white font-bold text-xs">
+          <div className="flex h-5 w-5 items-center justify-center rounded bg-zen-500 text-white font-bold text-xs">
             Z
           </div>
           <span>Powered by ZenMaid · Internal CS Tool</span>

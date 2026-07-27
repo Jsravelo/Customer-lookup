@@ -78,7 +78,7 @@ export default function ConversationCard({ conversation: c, searchQuery = '' }: 
           <div className="flex items-center gap-2 flex-wrap">
             <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
               c.state === 'open'
-                ? 'bg-green-100 text-green-800'
+                ? 'bg-zen-100 text-zen-800'
                 : c.state === 'snoozed'
                 ? 'bg-yellow-100 text-yellow-800'
                 : 'bg-gray-100 text-gray-600'
@@ -89,7 +89,7 @@ export default function ConversationCard({ conversation: c, searchQuery = '' }: 
               <span className="text-sm font-medium text-gray-900 truncate">{c.subject}</span>
             )}
             {c.tags.slice(0, 3).map((tag) => (
-              <span key={tag} className="rounded-full bg-indigo-50 px-2 py-0.5 text-xs text-indigo-700">
+              <span key={tag} className="rounded-full bg-zen-50 px-2 py-0.5 text-xs text-zen-700">
                 {tag}
               </span>
             ))}
@@ -120,12 +120,12 @@ export default function ConversationCard({ conversation: c, searchQuery = '' }: 
             <div
               key={msg.id}
               className={`px-4 py-3 text-sm ${
-                msg.authorType === 'admin' ? 'bg-indigo-50' : msg.authorType === 'bot' ? 'bg-gray-50' : 'bg-white'
+                msg.authorType === 'admin' ? 'bg-zen-50' : msg.authorType === 'bot' ? 'bg-gray-50' : 'bg-white'
               }`}
             >
               <div className="flex items-center justify-between gap-2 mb-1">
                 <span className={`font-medium ${
-                  msg.authorType === 'admin' ? 'text-indigo-700' : msg.authorType === 'bot' ? 'text-gray-500' : 'text-gray-900'
+                  msg.authorType === 'admin' ? 'text-zen-700' : msg.authorType === 'bot' ? 'text-gray-500' : 'text-gray-900'
                 }`}>
                   {msg.authorName ?? (msg.authorType === 'admin' ? 'Support' : msg.authorType === 'bot' ? 'Bot' : 'Customer')}
                 </span>
@@ -136,7 +136,7 @@ export default function ConversationCard({ conversation: c, searchQuery = '' }: 
                 <div className="mt-1 flex flex-wrap gap-2">
                   {msg.attachments.map((a) => (
                     <a key={a.url} href={a.url} target="_blank" rel="noreferrer"
-                      className="text-xs text-indigo-600 underline hover:text-indigo-500">
+                      className="text-xs text-zen-600 underline hover:text-zen-500">
                       📎 {a.name}
                     </a>
                   ))}

@@ -67,9 +67,9 @@ export default async function CustomerPage({ params }: PageProps) {
       {/* Nav bar */}
       <header className="border-b border-gray-200 bg-white px-6 py-4 shadow-sm">
         <div className="mx-auto flex max-w-5xl items-center gap-3">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-600 text-white font-bold text-sm">Z</div>
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zen-500 text-white font-bold text-sm">Z</div>
           <div>
-            <p className="text-xs font-medium text-green-700 leading-none">ZenMaid</p>
+            <p className="text-xs font-medium text-zen-600 leading-none">ZenMaid</p>
             <p className="text-sm font-semibold text-gray-900 leading-tight">Customer Lookup</p>
           </div>
         </div>
@@ -117,7 +117,7 @@ export default async function CustomerPage({ params }: PageProps) {
 
       <footer className="border-t border-gray-200 bg-white py-4 text-center">
         <div className="flex items-center justify-center gap-2 text-xs text-gray-400">
-          <div className="flex h-5 w-5 items-center justify-center rounded bg-green-600 text-white font-bold text-xs">Z</div>
+          <div className="flex h-5 w-5 items-center justify-center rounded bg-zen-500 text-white font-bold text-xs">Z</div>
           <span>Powered by ZenMaid · Internal CS Tool</span>
         </div>
       </footer>

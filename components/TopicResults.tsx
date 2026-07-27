@@ -39,9 +39,9 @@ export default function TopicResults({ results, keyword }: Props) {
           <li key={r.intercomId}>
             <Link
               href={`/customer/${r.intercomId}`}
-              className="flex items-center gap-4 px-4 py-3 hover:bg-green-50 transition-colors"
+              className="flex items-center gap-4 px-4 py-3 hover:bg-zen-50 transition-colors"
             >
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-green-100 text-sm font-semibold text-green-800">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zen-100 text-sm font-semibold text-zen-800">
                 {initials(r.name, r.email)}
               </div>
               <div className="flex-1 min-w-0">
@@ -56,7 +56,7 @@ export default function TopicResults({ results, keyword }: Props) {
                 )}
               </div>
               <div className="shrink-0 text-right">
-                <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-800">
+                <span className="inline-flex items-center rounded-full bg-zen-100 px-2 py-0.5 text-xs font-semibold text-zen-800">
                   {r.conversationCount}×
                 </span>
                 <p className="mt-1 text-xs text-gray-400">{formatDate(r.latestConversationDate)}</p>

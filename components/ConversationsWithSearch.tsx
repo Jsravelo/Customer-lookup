@@ -126,7 +126,7 @@ export default function ConversationsWithSearch({
   return (
     <section>
       <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-gray-900">
-        <svg className="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg className="h-5 w-5 text-zen-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-3 3-3-3z" />
         </svg>
         Intercom Conversations
@@ -148,7 +148,7 @@ export default function ConversationsWithSearch({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search conversations... (e.g. 'booking form', 'promised', 'refund')"
-          className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-9 text-sm shadow-sm focus:border-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-100"
+          className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-9 text-sm shadow-sm focus:border-zen-400 focus:outline-none focus:ring-2 focus:ring-zen-100"
         />
         {query && (
           <button

@@ -66,7 +66,7 @@ export default function AskClaude({ email, contactId }: { email: string; contact
                 <button
                   key={s}
                   onClick={() => ask(s)}
-                  className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs text-gray-600 hover:border-orange-300 hover:bg-orange-50"
+                  className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs text-gray-600 hover:border-zen-300 hover:bg-zen-50"
                 >
                   {s}
                 </button>
@@ -80,7 +80,7 @@ export default function AskClaude({ email, contactId }: { email: string; contact
             <div
               className={`inline-block max-w-[85%] whitespace-pre-wrap rounded-lg px-3 py-2 text-sm text-left ${
                 m.role === 'user'
-                  ? 'bg-green-600 text-white'
+                  ? 'bg-zen-500 text-white'
                   : 'bg-gray-100 text-gray-900'
               }`}
             >
@@ -114,13 +114,13 @@ export default function AskClaude({ email, contactId }: { email: string; contact
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="e.g. Why was their last invoice higher than usual?"
-          className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:outline-none"
+          className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-zen-400 focus:outline-none"
           disabled={loading}
         />
         <button
           type="submit"
           disabled={loading || !input.trim()}
-          className="rounded-md bg-orange-500 px-4 py-2 text-sm font-medium text-white hover:bg-orange-600 disabled:opacity-50"
+          className="rounded-md bg-zen-500 px-4 py-2 text-sm font-medium text-white hover:bg-zen-600 disabled:opacity-50"
         >
           Ask
         </button>

@@ -1,5 +1,11 @@
 import type { Metadata } from 'next'
+import { Mulish } from 'next/font/google'
 import './globals.css'
+
+const mulish = Mulish({
+  subsets: ['latin'],
+  variable: '--font-mulish',
+})
 
 export const metadata: Metadata = {
   title: 'Customer Lookup — ZenMaid',
@@ -8,8 +14,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className="min-h-screen bg-gray-50 text-gray-900 antialiased">
+    <html lang="en" className={mulish.variable}>
+      <body className="min-h-screen bg-[#f2f7f7] font-sans text-gray-900 antialiased">
         {children}
       </body>
     </html>

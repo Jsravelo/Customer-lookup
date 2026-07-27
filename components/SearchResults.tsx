@@ -18,9 +18,9 @@ export default function SearchResults({ candidates }: Props) {
           <li key={c.intercomId}>
             <Link
               href={`/customer/${c.intercomId}`}
-              className="flex items-center gap-4 px-4 py-3 hover:bg-indigo-50 transition-colors"
+              className="flex items-center gap-4 px-4 py-3 hover:bg-zen-50 transition-colors"
             >
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-sm font-semibold text-indigo-700">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-zen-100 text-sm font-semibold text-zen-700">
                 {initials(c.name)}
               </div>
               <div className="min-w-0">

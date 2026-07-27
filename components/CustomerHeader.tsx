@@ -25,7 +25,7 @@ function formatDate(ts: number | null): string {
 export default function CustomerHeader({ contact, totalConversations }: Props) {
   return (
     <div className="mb-6">
-      <Link href="/" className="mb-4 inline-flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-500">
+      <Link href="/" className="mb-4 inline-flex items-center gap-1 text-sm text-zen-600 hover:text-zen-500">
         <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
         </svg>
@@ -34,7 +34,7 @@ export default function CustomerHeader({ contact, totalConversations }: Props) {
 
       <div className="flex items-start gap-4 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
         {/* Avatar */}
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-green-600 text-xl font-bold text-white">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-zen-500 text-xl font-bold text-white">
           {initials(contact.name, contact.email)}
         </div>
 
