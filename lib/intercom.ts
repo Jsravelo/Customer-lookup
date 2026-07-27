@@ -164,6 +164,47 @@ export async function getConversationsByContactId(
   return results
 }
 
+// Lightweight listing for the Ask Claude tool loop — one search call, no
+// per-conversation thread fetches.
+export interface ConversationSummary {
+  id: string
+  createdAt: number
+  updatedAt: number
+  state: string
+  channel: string
+  subject: string | null
+  preview: string
+  tags: string[]
+}
+
+export async function listConversationSummaries(
+  contactId: string,
+  limit = 40
+): Promise<ConversationSummary[]> {
+  const raw = await post<{ conversations: Record<string, unknown>[] }>('/conversations/search', {
+    query: {
+      operator: 'AND',
+      value: [{ field: 'contact_ids', operator: 'IN', value: [contactId] }],
+    },
+    sort: { field: 'updated_at', order: 'descending' },
+    pagination: { per_page: limit },
+  })
+
+  return (raw.conversations ?? []).map((c) => {
+    const source = c.source as { type?: string; subject?: string; body?: string } | null
+    return {
+      id: c.id as string,
+      createdAt: c.created_at as number,
+      updatedAt: c.updated_at as number,
+      state: c.state as string,
+      channel: source?.type ?? 'other',
+      subject: source?.subject || null,
+      preview: stripHtml(source?.body ?? '').slice(0, 150),
+      tags: ((c.tags as { tags?: { name: string }[] } | null)?.tags ?? []).map((t) => t.name),
+    }
+  })
+}
+
 export async function getConversationById(id: string): Promise<IntercomConversation> {
   const raw = await get<Record<string, unknown>>(`/conversations/${id}`)
   const source = raw.source as { type?: string; subject?: string; body?: string } | null

@@ -79,7 +79,7 @@ export default async function CustomerPage({ params }: PageProps) {
 
       {contact.email && (
         <div className="mb-6">
-          <AskClaude email={contact.email} />
+          <AskClaude email={contact.email} contactId={params.id} />
         </div>
       )}
 
