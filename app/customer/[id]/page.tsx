@@ -12,13 +12,38 @@ import { ConversationsSkeleton, CloseSkeleton } from '@/components/Skeleton'
 // ─── Async sub-components (stream in via Suspense) ────────────────────────────
 
 async function ConversationsPanel({ contactId }: { contactId: string }) {
-  const conversations = await getConversationsByContactId(contactId, 20)
-  return <ConversationsWithSearch conversations={conversations} />
+  try {
+    const conversations = await getConversationsByContactId(contactId, 20)
+    return <ConversationsWithSearch conversations={conversations} />
+  } catch (err) {
+    console.error('[conversations-panel]', err)
+    return (
+      <div>
+        <h2 className="mb-3 text-base font-semibold text-gray-900">Intercom Conversations</h2>
+        <p className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          Couldn&apos;t load conversations from Intercom. Check the Intercom access token.
+        </p>
+      </div>
+    )
+  }
 }
 
 async function ClosePanel({ email }: { email: string }) {
-  const lead = await getFullLeadByEmail(email)
-  return <CloseCRMSection lead={lead} />
+  try {
+    const lead = await getFullLeadByEmail(email)
+    return <CloseCRMSection lead={lead} />
+  } catch (err) {
+    console.error('[close-panel]', err)
+    return (
+      <div>
+        <h2 className="mb-3 text-base font-semibold text-gray-900">Close CRM</h2>
+        <p className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          Couldn&apos;t load the Close CRM record. The Close API key is likely invalid or expired —
+          update CLOSE_API_KEY in the environment settings.
+        </p>
+      </div>
+    )
+  }
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
