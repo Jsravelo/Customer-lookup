@@ -28,6 +28,7 @@ export default function AskClaude({ email, contactId }: { email: string; contact
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
+  const [status, setStatus] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
 
@@ -49,13 +50,36 @@ export default function AskClaude({ email, contactId }: { email: string; contact
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, contactId, question, history }),
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error ?? 'Request failed')
-      setMessages((prev) => [...prev, { role: 'assistant', content: data.answer }])
+      if (!res.ok || !res.body) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data.error ?? 'Request failed')
+      }
+
+      // NDJSON stream: status updates while tools run, then the answer
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+      let done = false
+      while (!done) {
+        const chunk = await reader.read()
+        done = chunk.done
+        buffer += decoder.decode(chunk.value ?? new Uint8Array(), { stream: !done })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() ?? ''
+        for (const line of lines) {
+          if (!line.trim()) continue
+          const event = JSON.parse(line)
+          if (event.type === 'status') setStatus(event.status)
+          else if (event.type === 'answer')
+            setMessages((prev) => [...prev, { role: 'assistant', content: event.answer }])
+          else if (event.type === 'error') throw new Error(event.error)
+        }
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong')
     } finally {
       setLoading(false)
+      setStatus(null)
     }
   }
 
@@ -64,7 +88,7 @@ export default function AskClaude({ email, contactId }: { email: string; contact
       <div className="flex items-center gap-2 border-b border-gray-100 px-4 py-3">
         <div className="flex h-6 w-6 items-center justify-center rounded bg-orange-500 text-white text-xs font-bold">C</div>
         <h2 className="text-base font-semibold text-gray-900">Ask Claude about this customer</h2>
-        <span className="ml-auto text-xs text-gray-400">Stripe · Intercom · Close</span>
+        <span className="ml-auto text-xs text-gray-400">Stripe · Intercom · Close · Slack · Fathom</span>
       </div>
 
       <div className="max-h-96 overflow-y-auto px-4 py-3">
@@ -113,8 +137,9 @@ export default function AskClaude({ email, contactId }: { email: string; contact
 
         {loading && (
           <div className="mb-3">
-            <div className="inline-block rounded-lg bg-gray-100 px-3 py-2 text-sm text-gray-500">
-              Digging through Stripe, Intercom &amp; Close…
+            <div className="inline-flex items-center gap-2 rounded-lg bg-gray-100 px-3 py-2 text-sm text-gray-500">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-zen-500" />
+              {status ?? 'Working out where to look…'}
             </div>
           </div>
         )}

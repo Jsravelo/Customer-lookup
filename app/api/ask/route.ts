@@ -23,6 +23,7 @@ ZenMaid pricing context: Pro plan = $39/mo base + $14 per seat. Pro Max plan = $
 
 Rules:
 - Pick the right source for the question. Billing → Stripe. "Has the customer ever had an issue with / asked about / complained about X" → list conversations, then read the ones whose subject/preview look relevant. Sales history / notes → Close. Internal escalations, reported bugs, data uploads → Slack. Recorded calls and what was discussed on them → Fathom (Slack may also reference calls).
+- If the agent names specific platforms ("only check Slack", "from Stripe", "in Intercom"), use ONLY those platforms' tools — do not consult any other source, even briefly.
 - For a full customer summary, check Intercom, Stripe, Close, Slack AND Fathom.
 - For history questions, read enough conversations to answer confidently — don't stop at the first match, but don't read all of them either.
 - Answer directly and concisely — the reader is a support agent mid-conversation with a customer. Cite dates when referencing past conversations or charges.
@@ -85,6 +86,16 @@ const TOOLS: Anthropic.Tool[] = [
 ]
 
 const day = (unix: number) => new Date(unix * 1000).toISOString().slice(0, 10)
+
+// User-facing labels streamed to the UI while each tool runs
+const TOOL_STATUS: Record<string, string> = {
+  get_stripe_billing: 'Checking Stripe billing…',
+  list_conversations: 'Scanning Intercom conversations…',
+  read_conversation: 'Reading an Intercom conversation…',
+  get_close_crm: 'Pulling the Close CRM record…',
+  search_slack: 'Searching Slack…',
+  get_fathom_calls: 'Fetching Fathom call recordings…',
+}
 
 async function runTool(
   name: string,
@@ -196,70 +207,90 @@ export async function POST(req: NextRequest) {
     },
   ]
 
-  try {
-    for (let i = 0; i < 8; i++) {
-      const response = await client.messages.create({
-        model: 'claude-opus-5',
-        max_tokens: 8000,
-        thinking: { type: 'adaptive' },
-        system: SYSTEM_PROMPT,
-        tools: TOOLS,
-        messages,
-      })
+  // Stream NDJSON: {type:'status'} events while tools run, then one
+  // {type:'answer'} or {type:'error'} line at the end.
+  const encoder = new TextEncoder()
+  const stream = new ReadableStream({
+    async start(controller) {
+      const send = (obj: Record<string, unknown>) =>
+        controller.enqueue(encoder.encode(JSON.stringify(obj) + '\n'))
 
-      if (response.stop_reason === 'refusal') {
-        return NextResponse.json({
-          answer: "I can't help with that question. Try rephrasing it, or ask about the customer's billing, conversations, or CRM history.",
-        })
-      }
+      try {
+        for (let i = 0; i < 8; i++) {
+          const response = await client.messages.create({
+            model: 'claude-opus-5',
+            max_tokens: 8000,
+            thinking: { type: 'adaptive' },
+            system: SYSTEM_PROMPT,
+            tools: TOOLS,
+            messages,
+          })
 
-      if (response.stop_reason !== 'tool_use') {
-        const answer = response.content
-          .filter((b): b is Anthropic.TextBlock => b.type === 'text')
-          .map((b) => b.text)
-          .join('')
-        return NextResponse.json({ answer })
-      }
-
-      // Execute the requested tools and continue the loop
-      messages.push({ role: 'assistant', content: response.content })
-
-      const toolUses = response.content.filter(
-        (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use'
-      )
-      const toolResults: Anthropic.ToolResultBlockParam[] = await Promise.all(
-        toolUses.map(async (tu) => {
-          let result: string
-          let isError = false
-          try {
-            result = await runTool(tu.name, tu.input as Record<string, unknown>, ctx)
-          } catch (err) {
-            result = err instanceof Error ? err.message : 'Tool failed'
-            isError = true
+          if (response.stop_reason === 'refusal') {
+            send({
+              type: 'answer',
+              answer:
+                "I can't help with that question. Try rephrasing it, or ask about the customer's billing, conversations, or CRM history.",
+            })
+            controller.close()
+            return
           }
-          return {
-            type: 'tool_result' as const,
-            tool_use_id: tu.id,
-            content: result,
-            ...(isError ? { is_error: true } : {}),
-          }
-        })
-      )
-      messages.push({ role: 'user', content: toolResults })
-    }
 
-    return NextResponse.json(
-      { error: 'Took too many steps to answer — try a more specific question.' },
-      { status: 504 }
-    )
-  } catch (err) {
-    if (err instanceof Anthropic.AuthenticationError) {
-      return NextResponse.json({ error: 'Invalid ANTHROPIC_API_KEY' }, { status: 502 })
-    }
-    if (err instanceof Anthropic.RateLimitError) {
-      return NextResponse.json({ error: 'Claude is rate-limited, try again shortly' }, { status: 429 })
-    }
-    const msg = err instanceof Error ? err.message : 'Claude request failed'
-    return NextResponse.json({ error: msg }, { status: 502 })
-  }
+          if (response.stop_reason !== 'tool_use') {
+            const answer = response.content
+              .filter((b): b is Anthropic.TextBlock => b.type === 'text')
+              .map((b) => b.text)
+              .join('')
+            send({ type: 'answer', answer })
+            controller.close()
+            return
+          }
+
+          // Execute the requested tools and continue the loop
+          messages.push({ role: 'assistant', content: response.content })
+
+          const toolUses = response.content.filter(
+            (b): b is Anthropic.ToolUseBlock => b.type === 'tool_use'
+          )
+          for (const tu of toolUses) {
+            send({ type: 'status', status: TOOL_STATUS[tu.name] ?? 'Looking things up…' })
+          }
+          const toolResults: Anthropic.ToolResultBlockParam[] = await Promise.all(
+            toolUses.map(async (tu) => {
+              let result: string
+              let isError = false
+              try {
+                result = await runTool(tu.name, tu.input as Record<string, unknown>, ctx)
+              } catch (err) {
+                result = err instanceof Error ? err.message : 'Tool failed'
+                isError = true
+              }
+              return {
+                type: 'tool_result' as const,
+                tool_use_id: tu.id,
+                content: result,
+                ...(isError ? { is_error: true } : {}),
+              }
+            })
+          )
+          messages.push({ role: 'user', content: toolResults })
+          send({ type: 'status', status: 'Thinking…' })
+        }
+
+        send({ type: 'error', error: 'Took too many steps to answer — try a more specific question.' })
+        controller.close()
+      } catch (err) {
+        let msg = 'Claude request failed'
+        if (err instanceof Anthropic.AuthenticationError) msg = 'Invalid ANTHROPIC_API_KEY'
+        else if (err instanceof Anthropic.RateLimitError) msg = 'Claude is rate-limited, try again shortly'
+        else if (err instanceof Error) msg = err.message
+        send({ type: 'error', error: msg })
+        controller.close()
+      }
+    },
+  })
+
+  return new Response(stream, {
+    headers: { 'Content-Type': 'application/x-ndjson', 'Cache-Control': 'no-cache' },
+  })
 }
