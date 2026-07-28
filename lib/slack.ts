@@ -11,10 +11,19 @@ export interface SlackMessage {
   permalink: string
 }
 
-/** Returns null when Slack is not configured (no SLACK_USER_TOKEN). */
+/**
+ * Returns null when Slack is not configured at all. Prefers the live API
+ * (SLACK_USER_TOKEN); falls back to a local workspace export folder
+ * (SLACK_EXPORT_DIR or ./slack-export) for offline testing.
+ */
 export async function searchSlack(query: string, count = 30): Promise<SlackMessage[] | null> {
   const token = process.env.SLACK_USER_TOKEN
-  if (!token) return null
+  if (!token) {
+    const { findExportDir, searchSlackExport } = await import('./slack-export')
+    const dir = findExportDir()
+    if (!dir) return null
+    return searchSlackExport(dir, query, count)
+  }
 
   const params = new URLSearchParams({
     query,

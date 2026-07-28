@@ -24,3 +24,6 @@ yarn-error.log*
 # TypeScript build cache
 tsconfig.tsbuildinfo
 next-env.d.ts
+
+# Slack workspace export for local testing — internal data, NEVER commit
+/slack-export/
