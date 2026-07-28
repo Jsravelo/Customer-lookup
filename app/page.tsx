@@ -72,14 +72,10 @@ export default function HomePage() {
       <header className="border-b border-gray-200 bg-white px-6 py-4 shadow-sm">
         <div className="mx-auto flex max-w-4xl items-center justify-between">
           <div className="flex items-center gap-3">
-            {/* ZenMaid logo mark */}
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-zen-500 text-white font-bold text-sm">
-              Z
-            </div>
-            <div>
-              <p className="text-xs font-medium text-zen-600 leading-none">ZenMaid</p>
-              <p className="text-sm font-semibold text-gray-900 leading-tight">Customer Lookup</p>
-            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/zenmaid-logo.svg" alt="ZenMaid" className="h-9 w-auto" />
+            <div className="h-6 w-px bg-gray-200" />
+            <p className="text-sm font-semibold text-gray-900">Customer Lookup</p>
           </div>
           <p className="hidden sm:block text-xs text-gray-400">Internal CS Tool</p>
         </div>
@@ -187,10 +183,9 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="border-t border-gray-200 bg-white py-4 text-center">
         <div className="flex items-center justify-center gap-2 text-xs text-gray-400">
-          <div className="flex h-5 w-5 items-center justify-center rounded bg-zen-500 text-white font-bold text-xs">
-            Z
-          </div>
-          <span>Powered by ZenMaid · Internal CS Tool</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/zenmaid-logo.svg" alt="ZenMaid" className="h-4 w-auto opacity-70" />
+          <span>· Internal CS Tool</span>
         </div>
       </footer>
     </div>
