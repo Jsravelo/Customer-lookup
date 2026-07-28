@@ -62,8 +62,11 @@ interface Candidate {
   contactIds: string[]
 }
 
-async function findCandidates(terms: string[]): Promise<Candidate[]> {
+async function findCandidates(
+  terms: string[]
+): Promise<{ candidates: Candidate[]; rawMentions: number; totalFound: number }> {
   const byId = new Map<string, Candidate>()
+  let rawMentions = 0
 
   const searches = terms.slice(0, 10).flatMap((term) =>
     (['source.subject', 'source.body'] as const).map(async (field) => {
@@ -78,6 +81,9 @@ async function findCandidates(terms: string[]): Promise<Candidate[]> {
       })
       if (!res.ok) return
       const data = await res.json()
+      // total_count = all-time conversations matching this keyword; keep the
+      // largest single-term count as a floor for raw topic volume
+      rawMentions = Math.max(rawMentions, data.total_count ?? 0)
       for (const conv of data.conversations ?? []) {
         if (byId.has(conv.id)) continue
         byId.set(conv.id, {
@@ -92,9 +98,11 @@ async function findCandidates(terms: string[]): Promise<Candidate[]> {
   )
   await Promise.all(searches)
 
-  return Array.from(byId.values())
+  const totalFound = byId.size
+  const candidates = Array.from(byId.values())
     .sort((a, b) => b.updatedAt - a.updatedAt)
     .slice(0, 100)
+  return { candidates, rawMentions, totalFound }
 }
 
 // ─── Stage 3: Claude filters candidates by actual relevance ──────────────────
@@ -114,8 +122,13 @@ const FILTER_SCHEMA = {
         additionalProperties: false,
       },
     },
+    impact_summary: {
+      type: 'string',
+      description:
+        '2-4 sentences a support lead can paste when another department asks "how big of a deal is this": how common the issue is, common themes/variants, and severity signals (churn threats, blocked workflows). Ground every claim in the candidate data.',
+    },
   },
-  required: ['matches'],
+  required: ['matches', 'impact_summary'],
   additionalProperties: false,
 } as const
 
@@ -123,9 +136,10 @@ async function filterByIntent(
   query: string,
   intent: string,
   candidates: Candidate[]
-): Promise<Map<string, string>> {
+): Promise<{ reasons: Map<string, string>; impactSummary: string }> {
   const list = candidates.map((c) => ({
     id: c.id,
+    date: new Date(c.updatedAt * 1000).toISOString().slice(0, 10),
     subject: c.subject,
     preview: c.preview,
   }))
@@ -135,7 +149,7 @@ async function filterByIntent(
     max_tokens: 8000,
     output_config: { effort: 'low', format: { type: 'json_schema', schema: FILTER_SCHEMA } },
     system:
-      'You filter customer support conversations for a support agent\'s search. You are given the agent\'s query, the match intent, and candidate conversations (subject + opening message preview). Return only conversations that genuinely match the intent — e.g. for "complained about X", the customer must express a problem or frustration with X, not merely mention it. When a preview is too vague to tell, lean toward including it.',
+      'You filter customer support conversations for a support agent\'s search. You are given the agent\'s query, the match intent, and candidate conversations (date, subject, opening message preview). Return only conversations that genuinely match the intent — e.g. for "complained about X", the customer must express a problem or frustration with X, not merely mention it. When a preview is too vague to tell, lean toward including it. Also write an impact_summary the agent can send to other departments: quantify (N of the candidates reviewed match), name the recurring themes, and note severity signals like churn threats or blocked workflows.',
     messages: [
       {
         role: 'user',
@@ -143,9 +157,17 @@ async function filterByIntent(
       },
     ],
   })
-  const text = response.content.find((b): b is Anthropic.TextBlock => b.type === 'text')?.text ?? '{"matches":[]}'
-  const parsed = JSON.parse(text) as { matches: { conversation_id: string; reason: string }[] }
-  return new Map(parsed.matches.map((m) => [m.conversation_id, m.reason]))
+  const text =
+    response.content.find((b): b is Anthropic.TextBlock => b.type === 'text')?.text ??
+    '{"matches":[],"impact_summary":""}'
+  const parsed = JSON.parse(text) as {
+    matches: { conversation_id: string; reason: string }[]
+    impact_summary: string
+  }
+  return {
+    reasons: new Map(parsed.matches.map((m) => [m.conversation_id, m.reason])),
+    impactSummary: parsed.impact_summary,
+  }
 }
 
 // ─── Route ────────────────────────────────────────────────────────────────────
@@ -171,15 +193,18 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Broad keyword recall
-    const candidates = await findCandidates(terms)
+    const { candidates, rawMentions, totalFound } = await findCandidates(terms)
     if (candidates.length === 0) {
-      return NextResponse.json({ results: [], keyword: query })
+      return NextResponse.json({ results: [], keyword: query, stats: null })
     }
 
     // 3. AI relevance filter — on failure, fall back to keeping everything
     let reasons: Map<string, string>
+    let impactSummary: string | null = null
     try {
-      reasons = await filterByIntent(query, intent, candidates)
+      const filtered = await filterByIntent(query, intent, candidates)
+      reasons = filtered.reasons
+      impactSummary = filtered.impactSummary
     } catch (err) {
       console.error('[topic-search] filter failed, returning unfiltered', err)
       reasons = new Map(candidates.map((c) => [c.id, '']))
@@ -224,7 +249,18 @@ export async function POST(req: NextRequest) {
       (a, b) => b.conversationCount - a.conversationCount || b.latestConversationDate - a.latestConversationDate
     )
 
-    return NextResponse.json({ results, keyword: query })
+    const dates = matched.map((c) => c.updatedAt).filter(Boolean)
+    const stats = {
+      matchedConversations: matched.length,
+      uniqueCustomers: results.length,
+      rawMentions,
+      earliest: dates.length ? Math.min(...dates) : null,
+      latest: dates.length ? Math.max(...dates) : null,
+      truncated: totalFound > candidates.length,
+      impactSummary,
+    }
+
+    return NextResponse.json({ results, keyword: query, stats })
   } catch (err) {
     console.error('[topic-search]', err)
     return NextResponse.json({ error: 'Topic search failed' }, { status: 500 })

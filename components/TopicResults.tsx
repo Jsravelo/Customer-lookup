@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import type { TopicResult } from '@/types/customer'
+import type { TopicResult, TopicStats } from '@/types/customer'
 
 function formatDate(ts: number): string {
   return new Date(ts * 1000).toLocaleDateString('en-US', {
@@ -17,9 +17,19 @@ function initials(name: string | null, email: string | null): string {
 interface Props {
   results: TopicResult[]
   keyword: string
+  stats?: TopicStats | null
 }
 
-export default function TopicResults({ results, keyword }: Props) {
+function StatCard({ value, label }: { value: string | number; label: string }) {
+  return (
+    <div className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-center shadow-sm">
+      <p className="text-xl font-bold text-zen-800">{value}</p>
+      <p className="mt-0.5 text-xs text-gray-500">{label}</p>
+    </div>
+  )
+}
+
+export default function TopicResults({ results, keyword, stats }: Props) {
   if (results.length === 0) {
     return (
       <div className="mt-6 w-full max-w-2xl rounded-xl border border-gray-200 bg-white px-6 py-10 text-center shadow-sm">
@@ -31,6 +41,28 @@ export default function TopicResults({ results, keyword }: Props) {
 
   return (
     <div className="mt-6 w-full max-w-2xl">
+      {stats && (
+        <>
+          <div className="mb-3 flex gap-3">
+            <StatCard value={stats.matchedConversations} label="Matching conversations" />
+            <StatCard value={stats.uniqueCustomers} label="Customers affected" />
+            <StatCard value={`~${stats.rawMentions}`} label="All-time keyword mentions" />
+          </div>
+          {stats.impactSummary && (
+            <div className="mb-3 rounded-lg border border-zen-100 bg-zen-50 px-4 py-3">
+              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-zen-700">
+                Impact summary — paste-ready for other teams
+              </p>
+              <p className="text-sm leading-relaxed text-zen-800">{stats.impactSummary}</p>
+              {stats.truncated && (
+                <p className="mt-1.5 text-xs text-zen-600">
+                  Based on the {stats.matchedConversations} most recent matches — total volume is higher (see keyword mentions).
+                </p>
+              )}
+            </div>
+          )}
+        </>
+      )}
       <p className="mb-3 text-sm text-gray-500">
         <strong>{results.length}</strong> customer{results.length > 1 ? 's' : ''} match <strong>"{keyword}"</strong> — sorted by most conversations
       </p>

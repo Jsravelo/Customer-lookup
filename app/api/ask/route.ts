@@ -3,6 +3,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { getBillingByEmail } from '@/lib/stripe'
 import { listConversationSummaries, getConversationById } from '@/lib/intercom'
 import { getFullLeadByEmail } from '@/lib/close'
+import { searchSlack } from '@/lib/slack'
 
 export const maxDuration = 60
 
@@ -14,11 +15,13 @@ const SYSTEM_PROMPT = `You are a customer support assistant for ZenMaid's team. 
 - list_conversations — the customer's Intercom support conversation history (summaries, newest first).
 - read_conversation — full transcript of one Intercom conversation.
 - get_close_crm — Close CRM sales record: lead status, opportunities, notes, calls, SMS.
+- search_slack — internal team Slack: bug escalations, data upload requests, call notes, feature requests, and other internal discussion about customers. The team references customers by email address, so search the email first; a follow-up search by name or business name can catch more.
 
 ZenMaid pricing context: Pro plan = $39/mo base + $14 per seat. Pro Max plan = $49/mo base + $24 per seat. Stripe amounts are in cents.
 
 Rules:
-- Pick the right source for the question. Billing → Stripe. "Has the customer ever had an issue with / asked about / complained about X" → list conversations, then read the ones whose subject/preview look relevant. Sales history / notes → Close.
+- Pick the right source for the question. Billing → Stripe. "Has the customer ever had an issue with / asked about / complained about X" → list conversations, then read the ones whose subject/preview look relevant. Sales history / notes → Close. Internal escalations, reported bugs, data uploads, calls → Slack.
+- For a full customer summary, check Intercom, Stripe, Close AND Slack.
 - For history questions, read enough conversations to answer confidently — don't stop at the first match, but don't read all of them either.
 - Answer directly and concisely — the reader is a support agent mid-conversation with a customer. Cite dates when referencing past conversations or charges.
 - Convert cent amounts to dollars (e.g. 4900 → $49.00).
@@ -55,6 +58,21 @@ const TOOLS: Anthropic.Tool[] = [
     description:
       "Fetch the customer's Close CRM sales record: lead status, opportunities, and recent activities (notes, calls, SMS, emails).",
     input_schema: { type: 'object', properties: {}, additionalProperties: false },
+  },
+  {
+    name: 'search_slack',
+    description:
+      "Search the ZenMaid team's internal Slack for messages about this customer — bug escalations, data upload requests, call notes, feature requests. The team usually references customers by email address. Defaults to searching the customer's email; pass a query to search their name, business name, or email plus a topic.",
+    input_schema: {
+      type: 'object',
+      properties: {
+        query: {
+          type: 'string',
+          description: "Slack search query. Omit to search the customer's email address.",
+        },
+      },
+      additionalProperties: false,
+    },
   },
 ]
 
@@ -121,6 +139,16 @@ async function runTool(
           body: a.body?.slice(0, 800),
         })),
       })
+    }
+
+    case 'search_slack': {
+      const q = String(input.query ?? '').trim() || ctx.email
+      const msgs = await searchSlack(q)
+      if (msgs === null) {
+        return 'Slack is not connected yet (SLACK_USER_TOKEN is not configured). Tell the agent Slack data is unavailable.'
+      }
+      if (msgs.length === 0) return `No Slack messages found for "${q}".`
+      return JSON.stringify(msgs)
     }
 
     default:

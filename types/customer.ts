@@ -96,6 +96,18 @@ export interface TopicResult {
   reason?: string
 }
 
+export interface TopicStats {
+  matchedConversations: number
+  uniqueCustomers: number
+  /** All-time Intercom conversations mentioning the strongest related keyword */
+  rawMentions: number
+  earliest: number | null
+  latest: number | null
+  /** True when more candidates existed than were AI-reviewed */
+  truncated: boolean
+  impactSummary: string | null
+}
+
 // ─── Unified profile ─────────────────────────────────────────────────────────
 
 export interface CustomerProfile {

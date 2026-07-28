@@ -4,8 +4,7 @@ import { useState, FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import SearchResults from '@/components/SearchResults'
 import TopicResults from '@/components/TopicResults'
-import type { SearchCandidate } from '@/types/customer'
-import type { TopicResult } from '@/types/customer'
+import type { SearchCandidate, TopicResult, TopicStats } from '@/types/customer'
 
 type Mode = 'customer' | 'topic'
 
@@ -16,6 +15,7 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null)
   const [candidates, setCandidates] = useState<SearchCandidate[]>([])
   const [topicResults, setTopicResults] = useState<TopicResult[] | null>(null)
+  const [topicStats, setTopicStats] = useState<TopicStats | null>(null)
   const [searchedKeyword, setSearchedKeyword] = useState('')
   const router = useRouter()
 
@@ -25,6 +25,7 @@ export default function HomePage() {
     setError(null)
     setCandidates([])
     setTopicResults(null)
+    setTopicStats(null)
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -57,6 +58,7 @@ export default function HomePage() {
         const data = await res.json()
         if (!res.ok) { setError(data.error ?? 'Search failed'); return }
         setTopicResults(data.results ?? [])
+        setTopicStats(data.stats ?? null)
         setSearchedKeyword(data.keyword ?? query.trim())
       }
     } catch {
@@ -168,7 +170,7 @@ export default function HomePage() {
           {/* Results */}
           {!loading && mode === 'customer' && <SearchResults candidates={candidates} />}
           {!loading && mode === 'topic' && topicResults !== null && (
-            <TopicResults results={topicResults} keyword={searchedKeyword} />
+            <TopicResults results={topicResults} keyword={searchedKeyword} stats={topicStats} />
           )}
 
           {/* Empty state tip */}

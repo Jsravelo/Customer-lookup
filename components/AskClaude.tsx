@@ -1,6 +1,15 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import ReactMarkdown from 'react-markdown'
+
+const HISTORY_PROMPT = `Compile a complete history brief for this customer. Check all sources (Stripe, Intercom conversations, Close CRM, and Slack if available) and cover:
+1. Who they are — business, tenure, plan, seats, MRR.
+2. Billing — current status, discounts, failed payments, refunds or disputes.
+3. Support history — main things they've contacted us about, recurring issues, open items.
+4. Internal — escalations, reported bugs, data uploads, calls (from Slack/Close).
+5. Anything an agent should know before replying — temperament, promises we've made, risk flags.
+Use short sections with headers. Cite dates. If a source has nothing, say so in one line.`
 
 interface ChatMessage {
   role: 'user' | 'assistant'
@@ -60,7 +69,13 @@ export default function AskClaude({ email, contactId }: { email: string; contact
       <div className="max-h-96 overflow-y-auto px-4 py-3">
         {messages.length === 0 && !loading && (
           <div className="py-2">
-            <p className="mb-2 text-sm text-gray-500">Ask about billing, past conversations, or their CRM history:</p>
+            <button
+              onClick={() => ask(HISTORY_PROMPT)}
+              className="mb-3 w-full rounded-lg bg-zen-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-zen-600"
+            >
+              📋 Compile full history — one brief from Stripe, Intercom, Close &amp; Slack
+            </button>
+            <p className="mb-2 text-sm text-gray-500">Or ask a specific question:</p>
             <div className="flex flex-wrap gap-2">
               {SUGGESTIONS.map((s) => (
                 <button
@@ -78,13 +93,19 @@ export default function AskClaude({ email, contactId }: { email: string; contact
         {messages.map((m, i) => (
           <div key={i} className={`mb-3 ${m.role === 'user' ? 'text-right' : ''}`}>
             <div
-              className={`inline-block max-w-[85%] whitespace-pre-wrap rounded-lg px-3 py-2 text-sm text-left ${
+              className={`inline-block max-w-[85%] rounded-lg px-3 py-2 text-sm text-left ${
                 m.role === 'user'
-                  ? 'bg-zen-500 text-white'
+                  ? 'bg-zen-500 text-white whitespace-pre-wrap'
                   : 'bg-gray-100 text-gray-900'
               }`}
             >
-              {m.content}
+              {m.role === 'user' ? (
+                m.content === HISTORY_PROMPT ? 'Compile full history' : m.content
+              ) : (
+                <div className="prose-chat">
+                  <ReactMarkdown>{m.content}</ReactMarkdown>
+                </div>
+              )}
             </div>
           </div>
         ))}
