@@ -4,6 +4,7 @@ import { getBillingByEmail } from '@/lib/stripe'
 import { listConversationSummaries, getConversationById } from '@/lib/intercom'
 import { getFullLeadByEmail } from '@/lib/close'
 import { searchSlack } from '@/lib/slack'
+import { getFathomCalls } from '@/lib/fathom'
 
 export const maxDuration = 60
 
@@ -16,12 +17,13 @@ const SYSTEM_PROMPT = `You are a customer support assistant for ZenMaid's team. 
 - read_conversation — full transcript of one Intercom conversation.
 - get_close_crm — Close CRM sales record: lead status, opportunities, notes, calls, SMS.
 - search_slack — internal team Slack: bug escalations, data upload requests, call notes, feature requests, and other internal discussion about customers. The team references customers by email address, so search the email first; a follow-up search by name or business name can catch more.
+- get_fathom_calls — recorded calls with this customer from Fathom, including AI-generated call summaries with dates and durations.
 
 ZenMaid pricing context: Pro plan = $39/mo base + $14 per seat. Pro Max plan = $49/mo base + $24 per seat. Stripe amounts are in cents.
 
 Rules:
-- Pick the right source for the question. Billing → Stripe. "Has the customer ever had an issue with / asked about / complained about X" → list conversations, then read the ones whose subject/preview look relevant. Sales history / notes → Close. Internal escalations, reported bugs, data uploads, calls → Slack.
-- For a full customer summary, check Intercom, Stripe, Close AND Slack.
+- Pick the right source for the question. Billing → Stripe. "Has the customer ever had an issue with / asked about / complained about X" → list conversations, then read the ones whose subject/preview look relevant. Sales history / notes → Close. Internal escalations, reported bugs, data uploads → Slack. Recorded calls and what was discussed on them → Fathom (Slack may also reference calls).
+- For a full customer summary, check Intercom, Stripe, Close, Slack AND Fathom.
 - For history questions, read enough conversations to answer confidently — don't stop at the first match, but don't read all of them either.
 - Answer directly and concisely — the reader is a support agent mid-conversation with a customer. Cite dates when referencing past conversations or charges.
 - Convert cent amounts to dollars (e.g. 4900 → $49.00).
@@ -57,6 +59,12 @@ const TOOLS: Anthropic.Tool[] = [
     name: 'get_close_crm',
     description:
       "Fetch the customer's Close CRM sales record: lead status, opportunities, and recent activities (notes, calls, SMS, emails).",
+    input_schema: { type: 'object', properties: {}, additionalProperties: false },
+  },
+  {
+    name: 'get_fathom_calls',
+    description:
+      "Fetch this customer's recorded calls from Fathom: title, date, duration, participants, and the AI-generated call summary. Matched by the customer's email/domain on the calendar invite.",
     input_schema: { type: 'object', properties: {}, additionalProperties: false },
   },
   {
@@ -139,6 +147,15 @@ async function runTool(
           body: a.body?.slice(0, 800),
         })),
       })
+    }
+
+    case 'get_fathom_calls': {
+      const calls = await getFathomCalls(ctx.email)
+      if (calls === null) {
+        return 'Fathom is not connected yet (FATHOM_API_KEY is not configured). Tell the agent call recordings are unavailable; Slack may still reference calls.'
+      }
+      if (calls.length === 0) return `No Fathom calls found with ${ctx.email} (or their domain) on the invite.`
+      return JSON.stringify(calls)
     }
 
     case 'search_slack': {

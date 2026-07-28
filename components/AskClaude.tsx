@@ -3,12 +3,13 @@
 import { useState, useRef, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 
-const HISTORY_PROMPT = `Compile a complete history brief for this customer. Check all sources (Stripe, Intercom conversations, Close CRM, and Slack if available) and cover:
+const HISTORY_PROMPT = `Compile a complete history brief for this customer. Check all sources (Stripe, Intercom conversations, Close CRM, Slack, and Fathom calls where available) and cover:
 1. Who they are — business, tenure, plan, seats, MRR.
 2. Billing — current status, discounts, failed payments, refunds or disputes.
 3. Support history — main things they've contacted us about, recurring issues, open items.
-4. Internal — escalations, reported bugs, data uploads, calls (from Slack/Close).
-5. Anything an agent should know before replying — temperament, promises we've made, risk flags.
+4. Calls — recorded calls (Fathom) and what was discussed.
+5. Internal — escalations, reported bugs, data uploads (from Slack/Close).
+6. Anything an agent should know before replying — temperament, promises we've made, risk flags.
 Use short sections with headers. Cite dates. If a source has nothing, say so in one line.`
 
 interface ChatMessage {
