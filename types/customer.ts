@@ -92,6 +92,8 @@ export interface TopicResult {
   conversationCount: number
   latestConversationDate: number
   matchingSubjects: string[]
+  /** AI explanation of why this customer matches the query */
+  reason?: string
 }
 
 // ─── Unified profile ─────────────────────────────────────────────────────────

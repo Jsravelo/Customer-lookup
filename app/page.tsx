@@ -132,8 +132,9 @@ export default function HomePage() {
               </p>
             ) : (
               <p>
-                <strong>Who Asked About...</strong> — type a feature, topic, or phrase (e.g. "booking form", "payroll", "recurring").
-                Returns all customers who have mentioned it in their support conversations.
+                <strong>Who Asked About...</strong> — describe what you&apos;re looking for in plain English
+                (e.g. "people who complained about the booking form"). Claude searches conversations by
+                meaning and intent, not just keyword matches.
               </p>
             )}
           </div>
@@ -147,7 +148,7 @@ export default function HomePage() {
               placeholder={
                 mode === 'customer'
                   ? 'Email, name, Intercom ID, or company...'
-                  : 'Feature or topic (e.g. "booking form", "payroll")...'
+                  : 'e.g. people who complained about the booking form...'
               }
               className="flex-1 rounded-lg border border-gray-300 px-4 py-3 text-sm shadow-sm focus:border-zen-500 focus:outline-none focus:ring-2 focus:ring-zen-200"
               autoFocus

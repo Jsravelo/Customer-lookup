@@ -23,8 +23,8 @@ export default function TopicResults({ results, keyword }: Props) {
   if (results.length === 0) {
     return (
       <div className="mt-6 w-full max-w-2xl rounded-xl border border-gray-200 bg-white px-6 py-10 text-center shadow-sm">
-        <p className="text-gray-500">No customers found who mentioned <strong>"{keyword}"</strong>.</p>
-        <p className="mt-1 text-sm text-gray-400">Try a broader keyword or check the spelling.</p>
+        <p className="text-gray-500">No matching customers found for <strong>"{keyword}"</strong>.</p>
+        <p className="mt-1 text-sm text-gray-400">Try describing the topic differently or more broadly.</p>
       </div>
     )
   }
@@ -32,7 +32,7 @@ export default function TopicResults({ results, keyword }: Props) {
   return (
     <div className="mt-6 w-full max-w-2xl">
       <p className="mb-3 text-sm text-gray-500">
-        <strong>{results.length}</strong> customer{results.length > 1 ? 's' : ''} mentioned <strong>"{keyword}"</strong> — sorted by most conversations
+        <strong>{results.length}</strong> customer{results.length > 1 ? 's' : ''} match <strong>"{keyword}"</strong> — sorted by most conversations
       </p>
       <ul className="divide-y divide-gray-100 rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
         {results.map((r) => (
@@ -49,11 +49,13 @@ export default function TopicResults({ results, keyword }: Props) {
                 <p className="truncate text-sm text-gray-500">
                   {[r.email, r.company].filter(Boolean).join(' · ')}
                 </p>
-                {r.matchingSubjects.length > 0 && (
+                {r.reason ? (
+                  <p className="mt-0.5 truncate text-xs text-zen-600">{r.reason}</p>
+                ) : r.matchingSubjects.length > 0 ? (
                   <p className="mt-0.5 truncate text-xs text-gray-400 italic">
                     "{r.matchingSubjects[0]}"
                   </p>
-                )}
+                ) : null}
               </div>
               <div className="shrink-0 text-right">
                 <span className="inline-flex items-center rounded-full bg-zen-100 px-2 py-0.5 text-xs font-semibold text-zen-800">
