@@ -105,6 +105,10 @@ export interface TopicStats {
   latest: number | null
   /** True when more candidates existed than were AI-reviewed */
   truncated: boolean
+  issueSummary: string | null
+  themes: string[]
+  severity: 'low' | 'moderate' | 'high' | 'critical' | null
+  severityReason: string | null
   impactSummary: string | null
 }
 

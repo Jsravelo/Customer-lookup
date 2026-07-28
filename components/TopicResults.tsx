@@ -29,6 +29,17 @@ function StatCard({ value, label }: { value: string | number; label: string }) {
   )
 }
 
+const SEVERITY_STYLES: Record<string, string> = {
+  low: 'bg-gray-100 text-gray-700',
+  moderate: 'bg-amber-100 text-amber-800',
+  high: 'bg-orange-100 text-orange-800',
+  critical: 'bg-red-100 text-red-800',
+}
+
+function monthYear(ts: number): string {
+  return new Date(ts * 1000).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+}
+
 export default function TopicResults({ results, keyword, stats }: Props) {
   if (results.length === 0) {
     return (
@@ -48,12 +59,50 @@ export default function TopicResults({ results, keyword, stats }: Props) {
             <StatCard value={stats.uniqueCustomers} label="Customers affected" />
             <StatCard value={`~${stats.rawMentions}`} label="All-time keyword mentions" />
           </div>
-          {stats.impactSummary && (
+          {(stats.issueSummary || stats.impactSummary) && (
             <div className="mb-3 rounded-lg border border-zen-100 bg-zen-50 px-4 py-3">
-              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-zen-700">
-                Impact summary — paste-ready for other teams
-              </p>
-              <p className="text-sm leading-relaxed text-zen-800">{stats.impactSummary}</p>
+              <div className="mb-2 flex items-center gap-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-zen-700">Issue report</p>
+                {stats.severity && (
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-semibold capitalize ${SEVERITY_STYLES[stats.severity] ?? ''}`}>
+                    {stats.severity} severity
+                  </span>
+                )}
+                {stats.earliest && stats.latest && (
+                  <span className="ml-auto text-xs text-zen-600">
+                    {monthYear(stats.earliest)} – {monthYear(stats.latest)}
+                  </span>
+                )}
+              </div>
+
+              {stats.issueSummary && (
+                <p className="text-sm leading-relaxed text-zen-800">{stats.issueSummary}</p>
+              )}
+
+              {stats.themes.length > 0 && (
+                <ul className="mt-2 space-y-1">
+                  {stats.themes.map((t) => (
+                    <li key={t} className="flex gap-2 text-sm text-zen-800">
+                      <span className="text-zen-500">•</span>
+                      <span>{t}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {stats.severityReason && (
+                <p className="mt-2 text-xs text-zen-700 italic">{stats.severityReason}</p>
+              )}
+
+              {stats.impactSummary && (
+                <div className="mt-3 border-t border-zen-100 pt-2.5">
+                  <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-zen-700">
+                    Paste-ready for other teams
+                  </p>
+                  <p className="text-sm leading-relaxed text-zen-800">{stats.impactSummary}</p>
+                </div>
+              )}
+
               {stats.truncated && (
                 <p className="mt-1.5 text-xs text-zen-600">
                   Based on the {stats.matchedConversations} most recent matches — total volume is higher (see keyword mentions).
