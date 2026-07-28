@@ -196,30 +196,29 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const results: TopicResult[] = (
-      await Promise.all(
-        Array.from(contactConvs.entries()).map(async ([contactId, convs]) => {
-          try {
-            const res = await fetch(`${BASE}/contacts/${contactId}`, { headers: headers() })
-            if (!res.ok) return null
-            const c = await res.json()
-            const newest = convs.reduce((a, b) => (a.updatedAt > b.updatedAt ? a : b))
-            return {
-              intercomId: contactId,
-              name: c.name ?? null,
-              email: c.email ?? null,
-              company: c.companies?.data?.[0]?.name ?? null,
-              conversationCount: convs.length,
-              latestConversationDate: newest.updatedAt,
-              matchingSubjects: convs.map((v) => v.subject).filter((s): s is string => !!s),
-              reason: reasons.get(newest.id) || undefined,
-            } satisfies TopicResult
-          } catch {
-            return null
+    const enriched: (TopicResult | null)[] = await Promise.all(
+      Array.from(contactConvs.entries()).map(async ([contactId, convs]): Promise<TopicResult | null> => {
+        try {
+          const res = await fetch(`${BASE}/contacts/${contactId}`, { headers: headers() })
+          if (!res.ok) return null
+          const c = await res.json()
+          const newest = convs.reduce((a, b) => (a.updatedAt > b.updatedAt ? a : b))
+          return {
+            intercomId: contactId,
+            name: c.name ?? null,
+            email: c.email ?? null,
+            company: c.companies?.data?.[0]?.name ?? null,
+            conversationCount: convs.length,
+            latestConversationDate: newest.updatedAt,
+            matchingSubjects: convs.map((v) => v.subject).filter((s): s is string => !!s),
+            reason: reasons.get(newest.id) || undefined,
           }
-        })
-      )
-    ).filter((r): r is TopicResult => r !== null)
+        } catch {
+          return null
+        }
+      })
+    )
+    const results = enriched.filter((r): r is TopicResult => r !== null)
 
     results.sort(
       (a, b) => b.conversationCount - a.conversationCount || b.latestConversationDate - a.latestConversationDate
