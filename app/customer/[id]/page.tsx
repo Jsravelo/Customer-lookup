@@ -6,6 +6,9 @@ import CustomerHeader from '@/components/CustomerHeader'
 import ConversationsWithSearch from '@/components/ConversationsWithSearch'
 import CloseCRMSection from '@/components/CloseCRMSection'
 import AskClaude from '@/components/AskClaude'
+import StatusStrip from '@/components/StatusStrip'
+import BriefCard from '@/components/BriefCard'
+import TimelinePanel from '@/components/TimelinePanel'
 import { ConversationsSkeleton, CloseSkeleton } from '@/components/Skeleton'
 
 // ─── Async sub-components (stream in via Suspense) ────────────────────────────
@@ -78,7 +81,14 @@ export default async function CustomerPage({ params }: PageProps) {
       <CustomerHeader contact={contact} totalConversations={totalConversations} />
 
       {contact.email && (
-        <div className="mb-6">
+        <Suspense fallback={<div className="mb-6 h-12 animate-pulse rounded-lg bg-gray-100" />}>
+          <StatusStrip contact={contact} />
+        </Suspense>
+      )}
+
+      {contact.email && (
+        <div className="mb-6 space-y-4">
+          <BriefCard email={contact.email} contactId={params.id} />
           <AskClaude email={contact.email} contactId={params.id} />
         </div>
       )}
@@ -112,6 +122,12 @@ export default async function CustomerPage({ params }: PageProps) {
           </Suspense>
         </div>
       </div>
+
+      {contact.email && (
+        <Suspense fallback={<div className="mt-6 h-40 animate-pulse rounded-xl bg-gray-100" />}>
+          <TimelinePanel email={contact.email} contactId={params.id} />
+        </Suspense>
+      )}
       </main>
 
       <footer className="border-t border-gray-200 bg-white py-4 text-center">

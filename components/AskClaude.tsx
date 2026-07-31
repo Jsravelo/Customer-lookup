@@ -3,15 +3,6 @@
 import { useState, useRef, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 
-const HISTORY_PROMPT = `Compile a complete history brief for this customer. Check all sources (Stripe, Intercom conversations, Close CRM, Slack, and Fathom calls where available) and cover:
-1. Who they are — business, tenure, plan, seats, MRR.
-2. Billing — current status, discounts, failed payments, refunds or disputes.
-3. Support history — main things they've contacted us about, recurring issues, open items.
-4. Calls — recorded calls (Fathom) and what was discussed.
-5. Internal — escalations, reported bugs, data uploads (from Slack/Close).
-6. Anything an agent should know before replying — temperament, promises we've made, risk flags.
-Use short sections with headers. Cite dates. If a source has nothing, say so in one line.`
-
 interface ChatMessage {
   role: 'user' | 'assistant'
   content: string
@@ -94,13 +85,7 @@ export default function AskClaude({ email, contactId }: { email: string; contact
       <div className="max-h-96 overflow-y-auto px-4 py-3">
         {messages.length === 0 && !loading && (
           <div className="py-2">
-            <button
-              onClick={() => ask(HISTORY_PROMPT)}
-              className="mb-3 w-full rounded-lg bg-zen-500 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-zen-600"
-            >
-              📋 Compile full history — one brief from Stripe, Intercom, Close &amp; Slack
-            </button>
-            <p className="mb-2 text-sm text-gray-500">Or ask a specific question:</p>
+            <p className="mb-2 text-sm text-gray-500">Ask a specific question (the full brief is above):</p>
             <div className="flex flex-wrap gap-2">
               {SUGGESTIONS.map((s) => (
                 <button
@@ -125,7 +110,7 @@ export default function AskClaude({ email, contactId }: { email: string; contact
               }`}
             >
               {m.role === 'user' ? (
-                m.content === HISTORY_PROMPT ? 'Compile full history' : m.content
+                m.content
               ) : (
                 <div className="prose-chat">
                   <ReactMarkdown>{m.content}</ReactMarkdown>
