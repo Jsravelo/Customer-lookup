@@ -53,7 +53,32 @@ export async function POST(req: NextRequest) {
       return true
     })
 
-    return NextResponse.json({ candidates: unique })
+    // Intercom often holds duplicate contact records for one person (e.g. an
+    // orphan created at signup alongside the real account-linked record).
+    // Collapse same-email results, preferring: linked ZenMaid account >
+    // role 'user' > most recently seen.
+    const score = (c: SearchCandidate) =>
+      (c.hasAccount ? 4 : 0) + (c.role === 'user' ? 2 : 0) + (c.lastSeenAt ? 1 : 0)
+    const byEmail = new Map<string, SearchCandidate>()
+    const noEmail: SearchCandidate[] = []
+    for (const c of unique) {
+      const key = c.email?.toLowerCase()
+      if (!key) {
+        noEmail.push(c)
+        continue
+      }
+      const prev = byEmail.get(key)
+      if (
+        !prev ||
+        score(c) > score(prev) ||
+        (score(c) === score(prev) && (c.lastSeenAt ?? 0) > (prev.lastSeenAt ?? 0))
+      ) {
+        byEmail.set(key, c)
+      }
+    }
+    const deduped = [...Array.from(byEmail.values()), ...noEmail]
+
+    return NextResponse.json({ candidates: deduped })
   } catch (err) {
     console.error('[search]', err)
     return NextResponse.json({ error: 'Search failed' }, { status: 500 })

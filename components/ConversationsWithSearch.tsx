@@ -111,17 +111,35 @@ function RecurringTopics({
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
+// A conversation the bot handled alone — ZenBot/Fin replied and no human
+// teammate ever wrote a message. Only real comments count (assignments and
+// attribute changes carry admin authorship without human involvement), and
+// Intercom credits bot outbound to an "Operator"/bot-named admin.
+const BOT_NAMES = /\b(zenbot|fin|operator|workflow)\b/i
+
+function isBotOnly(c: IntercomConversation): boolean {
+  const comments = c.messages.filter((m) => m.type === 'comment' && m.body)
+  const botComment = (m: (typeof comments)[number]) =>
+    m.authorType === 'bot' || (m.authorType === 'admin' && BOT_NAMES.test(m.authorName ?? ''))
+  const humanComment = (m: (typeof comments)[number]) =>
+    m.authorType === 'admin' && !BOT_NAMES.test(m.authorName ?? '')
+  return comments.some(botComment) && !comments.some(humanComment)
+}
+
 export default function ConversationsWithSearch({
   conversations,
 }: {
   conversations: IntercomConversation[]
 }) {
   const [query, setQuery] = useState('')
+  const [showBots, setShowBots] = useState(false)
 
   const filtered = useMemo(
     () => conversations.filter((c) => matchesQuery(c, query)),
     [conversations, query]
   )
+  const humanConvos = useMemo(() => filtered.filter((c) => !isBotOnly(c)), [filtered])
+  const botConvos = useMemo(() => filtered.filter(isBotOnly), [filtered])
 
   return (
     <section>
@@ -177,11 +195,47 @@ export default function ConversationsWithSearch({
           {query ? `No conversations mention "${query}"` : 'No conversations found.'}
         </div>
       ) : (
-        <div className="space-y-2">
-          {filtered.map((c) => (
-            <ConversationCard key={c.id} conversation={c} searchQuery={query} />
-          ))}
-        </div>
+        <>
+          {humanConvos.length === 0 ? (
+            <div className="rounded-lg border border-gray-200 bg-white px-4 py-6 text-center text-sm text-gray-400">
+              No conversations with the team — everything below was handled by the bot.
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {humanConvos.map((c) => (
+                <ConversationCard key={c.id} conversation={c} searchQuery={query} />
+              ))}
+            </div>
+          )}
+
+          {botConvos.length > 0 && (
+            <div className="mt-3">
+              <button
+                onClick={() => setShowBots(!showBots)}
+                className="flex w-full items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-600 hover:bg-gray-100"
+              >
+                <span>🤖</span>
+                <span className="font-medium">
+                  Bot-only conversations ({botConvos.length})
+                </span>
+                <span className="text-xs text-gray-400">ZenBot / Fin, no human involved</span>
+                <svg
+                  className={`ml-auto h-4 w-4 text-gray-400 transition-transform ${showBots ? 'rotate-90' : ''}`}
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+              {showBots && (
+                <div className="mt-2 space-y-2">
+                  {botConvos.map((c) => (
+                    <ConversationCard key={c.id} conversation={c} searchQuery={query} />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </>
       )}
     </section>
   )

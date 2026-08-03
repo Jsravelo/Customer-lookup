@@ -45,11 +45,20 @@ export default async function TimelinePanel({
 
   const events: TimelineEvent[] = []
 
+  const CHANNEL_LABELS: Record<string, string> = {
+    conversation: 'Chat',
+    chat: 'Chat',
+    email: 'Email',
+    phone_call: 'Phone',
+    sms: 'SMS',
+  }
   for (const c of conversations) {
+    const isBotGreeting = /this is zenbot|i'?m here to answer your questions/i.test(c.preview)
+    const channel = CHANNEL_LABELS[c.channel] ?? c.channel.charAt(0).toUpperCase() + c.channel.slice(1)
     events.push({
       ts: c.createdAt,
       source: 'Intercom',
-      title: c.subject || `${c.channel} conversation`,
+      title: c.subject || (isBotGreeting ? 'ZenBot chat' : `${channel} conversation`),
       detail: `${c.preview}${c.state === 'open' ? ' · (still open)' : ''}`,
     })
   }

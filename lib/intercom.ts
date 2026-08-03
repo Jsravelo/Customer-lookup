@@ -72,6 +72,9 @@ export async function searchContactsByEmail(email: string): Promise<SearchCandid
     name: (c.name as string | null) ?? null,
     email: (c.email as string | null) ?? null,
     company: ((c.companies as { data?: { name: string }[] } | null)?.data?.[0]?.name) ?? null,
+    role: (c.role as string | null) ?? null,
+    hasAccount: !!c.external_id,
+    lastSeenAt: (c.last_seen_at as number | null) ?? null,
   }))
 }
 
@@ -85,6 +88,9 @@ export async function searchContactsByName(name: string): Promise<SearchCandidat
     name: (c.name as string | null) ?? null,
     email: (c.email as string | null) ?? null,
     company: ((c.companies as { data?: { name: string }[] } | null)?.data?.[0]?.name) ?? null,
+    role: (c.role as string | null) ?? null,
+    hasAccount: !!c.external_id,
+    lastSeenAt: (c.last_seen_at as number | null) ?? null,
   }))
 }
 
@@ -98,6 +104,9 @@ export async function searchContactsByPhone(phone: string): Promise<SearchCandid
     name: (c.name as string | null) ?? null,
     email: (c.email as string | null) ?? null,
     company: ((c.companies as { data?: { name: string }[] } | null)?.data?.[0]?.name) ?? null,
+    role: (c.role as string | null) ?? null,
+    hasAccount: !!c.external_id,
+    lastSeenAt: (c.last_seen_at as number | null) ?? null,
   }))
 }
 
@@ -232,18 +241,26 @@ export async function listConversationSummaries(
 
 export async function getConversationById(id: string): Promise<IntercomConversation> {
   const raw = await get<Record<string, unknown>>(`/conversations/${id}`)
-  const source = raw.source as { type?: string; subject?: string; body?: string } | null
+  const source = raw.source as {
+    type?: string
+    subject?: string
+    body?: string
+    author?: { type?: string; name?: string }
+  } | null
   const parts = ((raw.conversation_parts as { conversation_parts?: Record<string, unknown>[] } | null)?.conversation_parts) ?? []
   const assignee = raw.assignee as { name?: string } | null
 
   const allMessages: IntercomMessage[] = []
   if (source?.body) {
+    // Preserve who actually started the conversation — bot/admin-initiated
+    // conversations were previously misattributed to the customer
+    const srcType = source.author?.type
     allMessages.push({
       id: `${id}_source`,
       type: 'comment',
       body: stripHtml(source.body),
-      authorType: 'user',
-      authorName: null,
+      authorType: srcType === 'bot' ? 'bot' : srcType === 'admin' || srcType === 'team' ? 'admin' : 'user',
+      authorName: source.author?.name ?? null,
       createdAt: raw.created_at as number,
       attachments: [],
     })

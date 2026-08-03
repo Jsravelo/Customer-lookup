@@ -80,6 +80,11 @@ export interface SearchCandidate {
   name: string | null
   email: string | null
   company: string | null
+  /** Intercom role: 'user' | 'lead' */
+  role?: string | null
+  /** True when linked to a ZenMaid account (has external_id) */
+  hasAccount?: boolean
+  lastSeenAt?: number | null
 }
 
 // ─── Topic search ─────────────────────────────────────────────────────────────
