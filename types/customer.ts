@@ -5,6 +5,8 @@ export interface IntercomContact {
   name: string | null
   email: string | null
   phone: string | null
+  /** ZenMaid user id (Intercom external_id) */
+  externalId: string | null
   createdAt: number | null
   lastSeenAt: number | null
   company: {

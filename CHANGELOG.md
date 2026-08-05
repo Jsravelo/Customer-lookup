@@ -3,6 +3,14 @@
 All notable changes to the Customer Lookup tool. Versions follow [semver](https://semver.org):
 major = breaking/architectural change, minor = new feature, patch = fix.
 
+## 1.1.0 — 2026-08-04
+
+- **Added:** "Open in" deep links on every customer page — jump straight to
+  the customer's Intercom profile, ZenMaid admin record, Stripe customer, and
+  Close lead for direct verification
+- **Removed:** Send-to-Slack button and its endpoint (risk of accidental
+  sends); the Copy button remains
+
 ## 1.0.0 — 2026-08-04
 
 First versioned release. Everything below shipped between June and August 2026.

@@ -18,7 +18,6 @@ Create `.env.local` (gitignored — never commit it) with:
 | `ANTHROPIC_API_KEY` | ✅ | platform.claude.com → API keys |
 | `FATHOM_API_KEY` | optional | Fathom → User Settings → API Access |
 | `SLACK_USER_TOKEN` | optional | Slack app with `search:read` user scope (live Slack search) |
-| `SLACK_BOT_TOKEN` + `SLACK_BRIEF_CHANNEL` | optional | Slack app with `chat:write` bot scope (Send-to-Slack button) |
 | `SITE_PASSWORD` | optional | Any value — activates the site-wide password gate |
 | `BLOB_READ_WRITE_TOKEN` | optional | Vercel → Storage → Blob (shared brief cache) |
 

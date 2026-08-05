@@ -14,7 +14,6 @@ export default function BriefCard({ email, contactId }: { email: string; contact
   const [status, setStatus] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
-  const [slackState, setSlackState] = useState<'idle' | 'sending' | 'sent' | 'unavailable'>('idle')
   const [expanded, setExpanded] = useState(false)
   const startedRef = useRef(false)
 
@@ -93,25 +92,6 @@ export default function BriefCard({ email, contactId }: { email: string; contact
     setTimeout(() => setCopied(false), 2000)
   }
 
-  async function sendToSlack() {
-    if (!brief) return
-    setSlackState('sending')
-    const res = await fetch('/api/slack-post', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title: `Customer brief — ${email}`, text: brief }),
-    })
-    if (res.status === 501) setSlackState('unavailable')
-    else if (res.ok) {
-      setSlackState('sent')
-      setTimeout(() => setSlackState('idle'), 3000)
-    } else {
-      const data = await res.json().catch(() => ({}))
-      setError(data.error ?? 'Slack post failed')
-      setSlackState('idle')
-    }
-  }
-
   const freshness = updatedAt
     ? new Date(updatedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
     : null
@@ -123,19 +103,9 @@ export default function BriefCard({ email, contactId }: { email: string; contact
         {freshness && <span className="text-xs text-gray-400">updated {freshness}</span>}
         <div className="ml-auto flex items-center gap-2">
           {brief && (
-            <>
-              <button onClick={copyBrief} className="rounded-md border border-gray-200 px-2.5 py-1 text-xs text-gray-600 hover:bg-gray-50">
-                {copied ? '✓ Copied' : 'Copy'}
-              </button>
-              <button
-                onClick={sendToSlack}
-                disabled={slackState === 'sending' || slackState === 'unavailable'}
-                className="rounded-md border border-gray-200 px-2.5 py-1 text-xs text-gray-600 hover:bg-gray-50 disabled:opacity-60"
-                title={slackState === 'unavailable' ? 'Set SLACK_BOT_TOKEN + SLACK_BRIEF_CHANNEL to enable' : undefined}
-              >
-                {slackState === 'sending' ? 'Sending…' : slackState === 'sent' ? '✓ Sent' : slackState === 'unavailable' ? 'Slack not set up' : 'Send to Slack'}
-              </button>
-            </>
+            <button onClick={copyBrief} className="rounded-md border border-gray-200 px-2.5 py-1 text-xs text-gray-600 hover:bg-gray-50">
+              {copied ? '✓ Copied' : 'Copy'}
+            </button>
           )}
           <button
             onClick={generate}

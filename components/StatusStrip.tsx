@@ -1,5 +1,8 @@
 import type { IntercomContact } from '@/types/customer'
-import { cachedBilling, cachedConversations, cachedCompany } from '@/lib/cached'
+import { cachedBilling, cachedConversations, cachedCompany, cachedLead } from '@/lib/cached'
+
+// Stable workspace id from the Intercom API (/me → app.id_code)
+const INTERCOM_APP_ID = '6b27cdb7860d5024f49af6dc8c64484ccbb3eaf9'
 
 // At-a-glance facts + ZenMaid usage, rendered server-side with no AI involved.
 
@@ -29,11 +32,26 @@ function num(attrs: Record<string, string | number | boolean | null>, key: strin
 
 export default async function StatusStrip({ contact }: { contact: IntercomContact }) {
   const email = contact.email
-  const [billing, conversations, company] = await Promise.all([
+  const [billing, conversations, company, lead] = await Promise.all([
     email ? cachedBilling(email) : null,
     cachedConversations(contact.id),
     cachedCompany(contact.id),
+    email ? cachedLead(email) : null,
   ])
+
+  // Direct links to the customer's record in each source system
+  const links: { label: string; href: string }[] = [
+    {
+      label: 'Intercom',
+      href: `https://app.intercom.com/a/apps/${INTERCOM_APP_ID}/users/${contact.id}/all-conversations`,
+    },
+    {
+      label: 'ZenMaid admin',
+      href: `https://app.zenmaid.com/admins/show?query=${encodeURIComponent(contact.externalId ?? email ?? '')}`,
+    },
+    ...(billing ? [{ label: 'Stripe', href: `https://dashboard.stripe.com/customers/${billing.customerId}` }] : []),
+    ...(lead ? [{ label: 'Close', href: `https://app.close.com/lead/${lead.id}/` }] : []),
+  ]
   // Usage metrics live on the company; fall back to contact attributes
   const attrs = { ...contact.customAttributes, ...(company?.attributes ?? {}) }
 
@@ -70,6 +88,23 @@ export default async function StatusStrip({ contact }: { contact: IntercomContac
 
   return (
     <div className="mb-6">
+      <div className="mb-2 flex flex-wrap items-center gap-2">
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Open in</span>
+        {links.map((l) => (
+          <a
+            key={l.label}
+            href={l.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 shadow-sm hover:border-zen-300 hover:text-zen-700"
+          >
+            {l.label}
+            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+          </a>
+        ))}
+      </div>
       <div className="flex flex-wrap gap-2">
         {sub && <Chip label="Plan" value={sub.planName || '—'} tone={sub.status === 'active' || sub.status === 'trialing' ? 'good' : 'warn'} />}
         {sub && <Chip label="Status" value={sub.status} tone={sub.status === 'active' ? 'good' : sub.status === 'trialing' ? 'neutral' : 'bad'} />}
