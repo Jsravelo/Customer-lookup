@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import type { IntercomConversation } from '@/types/customer'
 import ConversationCard from './ConversationCard'
+import { isBotOnly } from '@/lib/conversations'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -110,21 +111,6 @@ function RecurringTopics({
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
-
-// A conversation the bot handled alone — ZenBot/Fin replied and no human
-// teammate ever wrote a message. Only real comments count (assignments and
-// attribute changes carry admin authorship without human involvement), and
-// Intercom credits bot outbound to an "Operator"/bot-named admin.
-const BOT_NAMES = /\b(zenbot|fin|operator|workflow)\b/i
-
-function isBotOnly(c: IntercomConversation): boolean {
-  const comments = c.messages.filter((m) => m.type === 'comment' && m.body)
-  const botComment = (m: (typeof comments)[number]) =>
-    m.authorType === 'bot' || (m.authorType === 'admin' && BOT_NAMES.test(m.authorName ?? ''))
-  const humanComment = (m: (typeof comments)[number]) =>
-    m.authorType === 'admin' && !BOT_NAMES.test(m.authorName ?? '')
-  return comments.some(botComment) && !comments.some(humanComment)
-}
 
 export default function ConversationsWithSearch({
   conversations,

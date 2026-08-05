@@ -15,6 +15,7 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      - run: npm test
       # next build runs linting and full TypeScript checking — fails the PR
       # before broken code can reach main / production
       - run: npm run build
