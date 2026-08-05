@@ -3,6 +3,17 @@
 All notable changes to the Customer Lookup tool. Versions follow [semver](https://semver.org):
 major = breaking/architectural change, minor = new feature, patch = fix.
 
+## 1.2.0 — 2026-08-04
+
+- **Added:** "Recently viewed" list on the home page — your last 8 customers,
+  stored per browser (each teammate sees their own)
+- **Changed:** platform links are now a prominent brand-colored "Verify in"
+  toolbar (Intercom blue, ZenMaid teal, Stripe purple, Close green) instead of
+  blending in with the metadata chips
+- **Changed:** the ZenMaid logo in the header now links back to search
+- **Internal:** Vitest suite (32 tests) over dedupe, bot detection, CSV
+  parsing, Stripe matching, and labels — runs in CI before every merge
+
 ## 1.1.0 — 2026-08-04
 
 - **Added:** "Open in" deep links on every customer page — jump straight to
