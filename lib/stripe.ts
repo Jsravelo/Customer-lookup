@@ -161,7 +161,7 @@ const GENERIC_LOCALS = new Set([
   'sales', 'accounts', 'bookings', 'service', 'team', 'mail', 'email',
 ])
 
-function candidateTokens(email: string): string[] {
+export function candidateTokens(email: string): string[] {
   const [local = '', domain = ''] = email.toLowerCase().split('@')
   const domainName = domain.split('.')[0]
   const tokens: string[] = []

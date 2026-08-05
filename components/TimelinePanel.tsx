@@ -5,6 +5,7 @@ import {
   cachedFathom,
   cachedSlack,
 } from '@/lib/cached'
+import { BOT_GREETING, channelLabel } from '@/lib/conversations'
 
 // One chronological feed across all five sources, server-rendered.
 
@@ -45,20 +46,13 @@ export default async function TimelinePanel({
 
   const events: TimelineEvent[] = []
 
-  const CHANNEL_LABELS: Record<string, string> = {
-    conversation: 'Chat',
-    chat: 'Chat',
-    email: 'Email',
-    phone_call: 'Phone',
-    sms: 'SMS',
-  }
   for (const c of conversations) {
-    const isBotGreeting = /this is zenbot|i'?m here to answer your questions/i.test(c.preview)
-    const channel = CHANNEL_LABELS[c.channel] ?? c.channel.charAt(0).toUpperCase() + c.channel.slice(1)
     events.push({
       ts: c.createdAt,
       source: 'Intercom',
-      title: c.subject || (isBotGreeting ? 'ZenBot chat' : `${channel} conversation`),
+      title:
+        c.subject ||
+        (BOT_GREETING.test(c.preview) ? 'ZenBot chat' : `${channelLabel(c.channel)} conversation`),
       detail: `${c.preview}${c.state === 'open' ? ' · (still open)' : ''}`,
     })
   }

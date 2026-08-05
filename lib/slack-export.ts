@@ -50,7 +50,7 @@ function loadUsers(dir: string): Map<string, string> {
   return map
 }
 
-function cleanText(text: string, users: Map<string, string>): string {
+export function cleanText(text: string, users: Map<string, string>): string {
   return text
     .replace(/<@([A-Z0-9]+)(\|[^>]*)?>/g, (_, id) => `@${users.get(id) ?? id}`)
     .replace(/<mailto:([^|>]+)(\|[^>]*)?>/g, '$1')
@@ -65,7 +65,7 @@ function cleanText(text: string, users: Map<string, string>): string {
 // Accepts any *.csv dropped in the export folder. Handles quoted fields and
 // flexible column names (text/message, user/sender, channel, ts/date/timestamp).
 
-function parseCsv(raw: string): string[][] {
+export function parseCsv(raw: string): string[][] {
   const rows: string[][] = []
   let row: string[] = []
   let field = ''
@@ -91,7 +91,7 @@ function parseCsv(raw: string): string[][] {
   return rows
 }
 
-function findColumn(header: string[], names: string[]): number {
+export function findColumn(header: string[], names: string[]): number {
   const lower = header.map((h) => h.trim().toLowerCase())
   for (const n of names) {
     const idx = lower.findIndex((h) => h === n || h.includes(n))
@@ -100,7 +100,7 @@ function findColumn(header: string[], names: string[]): number {
   return -1
 }
 
-function parseTimestamp(value: string): number {
+export function parseTimestamp(value: string): number {
   const num = parseFloat(value)
   if (!isNaN(num) && num > 1_000_000_000 && String(Math.floor(num)).length >= 10) return num
   const parsed = Date.parse(value)
