@@ -176,14 +176,18 @@ export async function getConversationsByContactId(
 
 // ZenMaid usage metrics (size, declared_cleaner_count, customers, payrolls…)
 // live on the Intercom company object, not the contact.
-export async function getCompanyAttributes(
-  contactId: string
-): Promise<{ name: string | null; attributes: Record<string, string | number | boolean | null> } | null> {
+export async function getCompanyAttributes(contactId: string): Promise<{
+  name: string | null
+  /** Intercom company_id — this is the ZenMaid account (user) id */
+  companyId: string | null
+  attributes: Record<string, string | number | boolean | null>
+} | null> {
   const raw = await get<{ data?: Record<string, unknown>[] }>(`/contacts/${contactId}/companies`)
   const company = raw.data?.[0]
   if (!company) return null
   return {
     name: (company.name as string | null) ?? null,
+    companyId: company.company_id != null ? String(company.company_id) : null,
     attributes: (company.custom_attributes as Record<string, string | number | boolean | null>) ?? {},
   }
 }
