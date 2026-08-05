@@ -48,6 +48,7 @@ function mapContact(raw: Record<string, unknown>): IntercomContact {
     name: (raw.name as string | null) ?? null,
     email: (raw.email as string | null) ?? null,
     phone: (raw.phone as string | null) ?? null,
+    externalId: raw.external_id != null ? String(raw.external_id) : null,
     createdAt: (raw.created_at as number | null) ?? null,
     lastSeenAt: (raw.last_seen_at as number | null) ?? null,
     company: firstCompany ? { id: firstCompany.id, name: firstCompany.name } : null,
