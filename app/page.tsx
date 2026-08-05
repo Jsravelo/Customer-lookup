@@ -4,6 +4,7 @@ import { useState, FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import SearchResults from '@/components/SearchResults'
 import TopicResults from '@/components/TopicResults'
+import RecentCustomers from '@/components/RecentCustomers'
 import type { SearchCandidate, TopicResult, TopicStats } from '@/types/customer'
 
 type Mode = 'customer' | 'topic'
@@ -73,12 +74,12 @@ export default function HomePage() {
       {/* Header */}
       <header className="border-b border-gray-200 bg-white px-6 py-4 shadow-sm">
         <div className="mx-auto flex max-w-4xl items-center justify-between">
-          <div className="flex items-center gap-3">
+          <a href="/" className="flex items-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/zenmaid-logo.svg" alt="ZenMaid" className="h-9 w-auto" />
-            <div className="h-6 w-px bg-gray-200" />
-            <p className="text-sm font-semibold text-gray-900">Customer Lookup</p>
-          </div>
+            <span className="h-6 w-px bg-gray-200" />
+            <span className="text-sm font-semibold text-gray-900">Customer Lookup</span>
+          </a>
           <p className="hidden sm:block text-xs text-gray-400">Internal CS Tool</p>
         </div>
       </header>
@@ -173,11 +174,14 @@ export default function HomePage() {
             <TopicResults results={topicResults} keyword={searchedKeyword} stats={topicStats} />
           )}
 
-          {/* Empty state tip */}
+          {/* Recently viewed + empty state tip */}
           {!loading && candidates.length === 0 && topicResults === null && !error && (
-            <p className="mt-8 text-center text-xs text-gray-400">
-              Tip: Use an exact email address for the fastest customer lookup
-            </p>
+            <>
+              <RecentCustomers />
+              <p className="mt-8 text-center text-xs text-gray-400">
+                Tip: Use an exact email address for the fastest customer lookup
+              </p>
+            </>
           )}
         </div>
       </main>

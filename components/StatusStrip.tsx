@@ -39,18 +39,37 @@ export default async function StatusStrip({ contact }: { contact: IntercomContac
     email ? cachedLead(email) : null,
   ])
 
-  // Direct links to the customer's record in each source system
-  const links: { label: string; href: string }[] = [
+  // Direct links to the customer's record in each source system, styled with
+  // each platform's brand color so they read as actions, not metadata
+  const links = [
     {
       label: 'Intercom',
       href: `https://app.intercom.com/a/apps/${INTERCOM_APP_ID}/users/${contact.id}/all-conversations`,
+      classes: 'bg-blue-50 text-blue-700 ring-blue-200 hover:bg-blue-100',
+      dot: 'bg-blue-500',
     },
     {
       label: 'ZenMaid admin',
       href: `https://app.zenmaid.com/admins/show?query=${encodeURIComponent(contact.externalId ?? email ?? '')}`,
+      classes: 'bg-zen-50 text-zen-700 ring-zen-200 hover:bg-zen-100',
+      dot: 'bg-zen-500',
     },
-    ...(billing ? [{ label: 'Stripe', href: `https://dashboard.stripe.com/customers/${billing.customerId}` }] : []),
-    ...(lead ? [{ label: 'Close', href: `https://app.close.com/lead/${lead.id}/` }] : []),
+    ...(billing
+      ? [{
+          label: 'Stripe',
+          href: `https://dashboard.stripe.com/customers/${billing.customerId}`,
+          classes: 'bg-purple-50 text-purple-700 ring-purple-200 hover:bg-purple-100',
+          dot: 'bg-[#635BFF]',
+        }]
+      : []),
+    ...(lead
+      ? [{
+          label: 'Close',
+          href: `https://app.close.com/lead/${lead.id}/`,
+          classes: 'bg-emerald-50 text-emerald-700 ring-emerald-200 hover:bg-emerald-100',
+          dot: 'bg-emerald-500',
+        }]
+      : []),
   ]
   // Usage metrics live on the company; fall back to contact attributes
   const attrs = { ...contact.customAttributes, ...(company?.attributes ?? {}) }
@@ -88,18 +107,19 @@ export default async function StatusStrip({ contact }: { contact: IntercomContac
 
   return (
     <div className="mb-6">
-      <div className="mb-2 flex flex-wrap items-center gap-2">
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Open in</span>
+      <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2.5 shadow-sm">
+        <span className="text-xs font-semibold text-gray-500">Verify in</span>
         {links.map((l) => (
           <a
             key={l.label}
             href={l.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 rounded-md border border-gray-200 bg-white px-2.5 py-1 text-xs font-medium text-gray-700 shadow-sm hover:border-zen-300 hover:text-zen-700"
+            className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold ring-1 ring-inset transition ${l.classes}`}
           >
+            <span className={`h-2 w-2 rounded-full ${l.dot}`} />
             {l.label}
-            <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className="h-3.5 w-3.5 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
             </svg>
           </a>

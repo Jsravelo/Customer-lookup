@@ -1,4 +1,5 @@
 import { Suspense } from 'react'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { getContactById, getConversationsByContactId, countConversations } from '@/lib/intercom'
 import { getFullLeadByEmail } from '@/lib/close'
@@ -9,6 +10,7 @@ import AskClaude from '@/components/AskClaude'
 import StatusStrip from '@/components/StatusStrip'
 import BriefCard from '@/components/BriefCard'
 import TimelinePanel from '@/components/TimelinePanel'
+import RecentTracker from '@/components/RecentTracker'
 import { ConversationsSkeleton, CloseSkeleton } from '@/components/Skeleton'
 
 // ─── Async sub-components (stream in via Suspense) ────────────────────────────
@@ -70,14 +72,17 @@ export default async function CustomerPage({ params }: PageProps) {
       {/* Nav bar */}
       <header className="border-b border-gray-200 bg-white px-6 py-4 shadow-sm">
         <div className="mx-auto flex max-w-5xl items-center gap-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/zenmaid-logo.svg" alt="ZenMaid" className="h-9 w-auto" />
-          <div className="h-6 w-px bg-gray-200" />
-          <p className="text-sm font-semibold text-gray-900">Customer Lookup</p>
+          <Link href="/" className="flex items-center gap-3" title="Back to search">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/zenmaid-logo.svg" alt="ZenMaid" className="h-9 w-auto" />
+            <span className="h-6 w-px bg-gray-200" />
+            <span className="text-sm font-semibold text-gray-900">Customer Lookup</span>
+          </Link>
         </div>
       </header>
 
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">
+      <RecentTracker id={params.id} name={contact.name} email={contact.email} />
       <CustomerHeader contact={contact} totalConversations={totalConversations} />
 
       {contact.email && (
