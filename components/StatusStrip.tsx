@@ -50,7 +50,11 @@ export default async function StatusStrip({ contact }: { contact: IntercomContac
     },
     {
       label: 'ZenMaid admin',
-      href: `https://app.zenmaid.com/admins/show?query=${encodeURIComponent(contact.externalId ?? email ?? '')}`,
+      // Sign-in-as link keyed by the ZenMaid account id (= Intercom company_id);
+      // falls back to the admin search when no company is linked
+      href: company?.companyId
+        ? `https://app.zenmaid.com/admins/user_sign_in/${company.companyId}`
+        : `https://app.zenmaid.com/admins/show?query=${encodeURIComponent(email ?? '')}`,
       classes: 'bg-zen-50 text-zen-700 ring-zen-200 hover:bg-zen-100',
       dot: 'bg-zen-500',
     },
