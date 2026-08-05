@@ -3,6 +3,16 @@
 All notable changes to the Customer Lookup tool. Versions follow [semver](https://semver.org):
 major = breaking/architectural change, minor = new feature, patch = fix.
 
+## 1.3.0 — 2026-08-04
+
+- **Added:** trend mode in "Who Asked About…" — questions like "what have
+  customers been talking about the past month" now analyze all recent
+  conversations and return a themed breakdown with counts, customers
+  involved, and a report-ready summary (window parsed from the question)
+- **Changed:** the home page headline and description now switch with the
+  selected tab, and the topic tab explains all three question types
+  (specific issue, volume, trends)
+
 ## 1.2.0 — 2026-08-04
 
 - **Added:** "Recently viewed" list on the home page — your last 8 customers,
