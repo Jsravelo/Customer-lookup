@@ -25,27 +25,45 @@ function stripHtml(html: string): string {
 const EXPAND_SCHEMA = {
   type: 'object',
   properties: {
+    mode: {
+      type: 'string',
+      enum: ['topic', 'trend'],
+      description:
+        "'topic' when the agent asks about a specific subject. 'trend' when they ask what customers have been talking about generally over some period, with no specific subject.",
+    },
+    time_window_days: {
+      type: 'integer',
+      description:
+        'Trend mode only: the period the agent asked about, in days (e.g. "past weeks" ≈ 21, "past month" ≈ 30, "past months" ≈ 90). Use 30 when unstated.',
+    },
     search_terms: {
       type: 'array',
       items: { type: 'string' },
-      description: 'Short keywords/phrases likely to appear in matching customer messages',
+      description: 'Topic mode: short keywords/phrases likely to appear in matching customer messages. Empty for trend mode.',
     },
     intent: {
       type: 'string',
       description: 'One sentence: what makes a conversation a true match for this query',
     },
   },
-  required: ['search_terms', 'intent'],
+  required: ['mode', 'time_window_days', 'search_terms', 'intent'],
   additionalProperties: false,
 } as const
 
-async function expandQuery(query: string): Promise<{ search_terms: string[]; intent: string }> {
+interface ExpandedQuery {
+  mode: 'topic' | 'trend'
+  time_window_days: number
+  search_terms: string[]
+  intent: string
+}
+
+async function expandQuery(query: string): Promise<ExpandedQuery> {
   const response = await client.messages.create({
     model: 'claude-opus-5',
     max_tokens: 4000,
     output_config: { effort: 'low', format: { type: 'json_schema', schema: EXPAND_SCHEMA } },
     system:
-      'You help search a cleaning-business SaaS (ZenMaid) support inbox. Given a support agent\'s natural-language query, produce 5-10 short search terms (1-3 words each) that customers would actually type in messages about this topic — include synonyms, common misspellings are not needed. Also state the intent: what a conversation must actually be about to count as a match (e.g. a complaint vs a mere mention).',
+      'You help search a cleaning-business SaaS (ZenMaid) support inbox. Classify the support agent\'s query: a specific-subject lookup (mode "topic") or a general "what have customers been talking about lately" question (mode "trend"). For topic mode, produce 5-10 short search terms (1-3 words each) that customers would actually type in messages about this subject — include synonyms. Also state the intent: what a conversation must actually be about to count as a match (e.g. a complaint vs a mere mention).',
     messages: [{ role: 'user', content: query }],
   })
   const text = response.content.find((b): b is Anthropic.TextBlock => b.type === 'text')?.text ?? '{}'
@@ -103,6 +121,90 @@ async function findCandidates(
     .sort((a, b) => b.updatedAt - a.updatedAt)
     .slice(0, 100)
   return { candidates, rawMentions, totalFound }
+}
+
+// ─── Trend mode: recent conversations, no keyword filter ─────────────────────
+
+async function recentCandidates(
+  days: number
+): Promise<{ candidates: Candidate[]; totalInWindow: number }> {
+  const since = Math.floor(Date.now() / 1000) - days * 86400
+  const res = await fetch(`${BASE}/conversations/search`, {
+    method: 'POST',
+    headers: headers(),
+    body: JSON.stringify({
+      query: { field: 'created_at', operator: '>', value: since },
+      sort: { field: 'created_at', order: 'descending' },
+      pagination: { per_page: 150 },
+    }),
+  })
+  if (!res.ok) throw new Error(`Intercom ${res.status}`)
+  const data = await res.json()
+  const candidates: Candidate[] = (data.conversations ?? []).map(
+    (conv: Record<string, any>) => ({
+      id: conv.id,
+      subject: conv.source?.subject || null,
+      preview: stripHtml(conv.source?.body ?? '').slice(0, 220),
+      updatedAt: conv.created_at ?? 0,
+      contactIds: (conv.contacts?.contacts ?? []).map((c: { id: string }) => c.id).filter(Boolean),
+    })
+  )
+  return { candidates, totalInWindow: data.total_count ?? candidates.length }
+}
+
+const TREND_SCHEMA = {
+  type: 'object',
+  properties: {
+    summary: {
+      type: 'string',
+      description:
+        '3-5 sentences: what customers have been talking about in this period, for a support lead reporting to other departments. Lead with the dominant themes and any spikes or notable escalations.',
+    },
+    themes: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          name: { type: 'string', description: 'Short theme name' },
+          approx_count: { type: 'integer', description: 'How many of the analyzed conversations fit this theme' },
+          description: { type: 'string', description: 'One sentence: what customers say about it' },
+        },
+        required: ['name', 'approx_count', 'description'],
+        additionalProperties: false,
+      },
+      description: 'Top 5-8 themes, largest first. Skip pure bot greetings with no customer content.',
+    },
+  },
+  required: ['summary', 'themes'],
+  additionalProperties: false,
+} as const
+
+async function analyzeTrends(
+  query: string,
+  candidates: Candidate[]
+): Promise<{ summary: string; themes: string[] }> {
+  const list = candidates.map((c) => ({
+    date: new Date(c.updatedAt * 1000).toISOString().slice(0, 10),
+    subject: c.subject,
+    preview: c.preview,
+  }))
+  const response = await client.messages.create({
+    model: 'claude-opus-5',
+    max_tokens: 8000,
+    output_config: { effort: 'low', format: { type: 'json_schema', schema: TREND_SCHEMA } },
+    system:
+      "You analyze a cleaning-business SaaS (ZenMaid) support inbox. Given recent conversations (date, subject, opening preview), cluster them into themes and summarize what customers have been talking about. Ignore empty bot greetings with no customer substance. Counts are per analyzed conversation.",
+    messages: [{ role: 'user', content: `Agent's question: ${query}\n\nConversations:\n${JSON.stringify(list)}` }],
+  })
+  const text = response.content.find((b): b is Anthropic.TextBlock => b.type === 'text')?.text ?? '{}'
+  const parsed = JSON.parse(text) as {
+    summary: string
+    themes: { name: string; approx_count: number; description: string }[]
+  }
+  return {
+    summary: parsed.summary ?? '',
+    themes: (parsed.themes ?? []).map((t) => `${t.name} (~${t.approx_count}) — ${t.description}`),
+  }
 }
 
 // ─── Stage 3: Claude filters candidates by actual relevance ──────────────────
@@ -219,16 +321,51 @@ export async function POST(req: NextRequest) {
   const query = keyword.trim()
 
   try {
-    // 1. Understand the query
-    let terms: string[] = []
-    let intent = query
+    // 1. Understand the query (specific topic vs "what's been discussed lately")
+    let expanded: ExpandedQuery
     try {
-      const expanded = await expandQuery(query)
-      terms = expanded.search_terms
-      intent = expanded.intent
+      expanded = await expandQuery(query)
     } catch {
-      terms = query.split(/\s+/).filter((w) => w.length >= 2)
+      expanded = {
+        mode: 'topic',
+        time_window_days: 30,
+        search_terms: query.split(/\s+/).filter((w) => w.length >= 2),
+        intent: query,
+      }
     }
+
+    // Trend mode: analyze everything recent, no keyword filter
+    if (expanded.mode === 'trend') {
+      const days = Math.min(Math.max(expanded.time_window_days || 30, 7), 120)
+      const { candidates, totalInWindow } = await recentCandidates(days)
+      if (candidates.length === 0) {
+        return NextResponse.json({ results: [], keyword: query, stats: null })
+      }
+      const { summary, themes } = await analyzeTrends(query, candidates)
+      const dates = candidates.map((c) => c.updatedAt).filter(Boolean)
+      return NextResponse.json({
+        results: [],
+        keyword: query,
+        stats: {
+          mode: 'trend',
+          windowDays: days,
+          matchedConversations: candidates.length,
+          uniqueCustomers: new Set(candidates.flatMap((c) => c.contactIds)).size,
+          rawMentions: totalInWindow,
+          earliest: dates.length ? Math.min(...dates) : null,
+          latest: dates.length ? Math.max(...dates) : null,
+          truncated: totalInWindow > candidates.length,
+          issueSummary: summary,
+          themes,
+          severity: null,
+          severityReason: null,
+          impactSummary: null,
+        },
+      })
+    }
+
+    const terms = expanded.search_terms
+    const intent = expanded.intent
 
     // 2. Broad keyword recall
     const { candidates, rawMentions, totalFound } = await findCandidates(terms)
@@ -289,6 +426,8 @@ export async function POST(req: NextRequest) {
 
     const dates = matched.map((c) => c.updatedAt).filter(Boolean)
     const stats = {
+      mode: 'topic',
+      windowDays: null,
       matchedConversations: matched.length,
       uniqueCustomers: results.length,
       rawMentions,

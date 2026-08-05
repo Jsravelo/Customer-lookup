@@ -104,6 +104,10 @@ export interface TopicResult {
 }
 
 export interface TopicStats {
+  /** 'topic' = specific-subject search; 'trend' = "what's been discussed lately" */
+  mode?: 'topic' | 'trend'
+  /** Trend mode: the analyzed period in days */
+  windowDays?: number | null
   matchedConversations: number
   uniqueCustomers: number
   /** All-time Intercom conversations mentioning the strongest related keyword */

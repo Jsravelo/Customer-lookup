@@ -88,13 +88,15 @@ export default function HomePage() {
       <main className="flex flex-1 flex-col items-center px-4 py-12">
         <div className="w-full max-w-2xl">
 
-          {/* Hero */}
+          {/* Hero — description follows the selected tab */}
           <div className="mb-8 text-center">
             <h1 className="text-2xl font-bold text-gray-900">
-              What do you need to find?
+              {mode === 'customer' ? 'Look up a customer' : 'Search by topic'}
             </h1>
             <p className="mt-2 text-gray-500 text-sm leading-relaxed max-w-md mx-auto">
-              Look up a specific customer to see their full conversation history, or search across all customers to find who has asked about a particular feature or topic.
+              {mode === 'customer'
+                ? 'One consolidated history per customer — billing, conversations, CRM, calls, and internal escalations from all five platforms in one place.'
+                : 'Measure how big something is across all customers — how many asked about it, who they are, and how severe it is. Or ask what customers have been talking about lately.'}
             </p>
           </div>
 
@@ -131,9 +133,10 @@ export default function HomePage() {
               </p>
             ) : (
               <p>
-                <strong>Who Asked About...</strong> — describe what you&apos;re looking for in plain English
-                (e.g. "people who complained about the booking form"). Claude searches conversations by
-                meaning and intent, not just keyword matches.
+                <strong>Who Asked About...</strong> — ask in plain English. Three kinds of question work:
+                a specific issue ("people who complained about the booking form"), volume ("how many times
+                have we been asked about payroll"), or trends ("what have customers been talking about the
+                past month"). Claude searches by meaning, not keywords.
               </p>
             )}
           </div>

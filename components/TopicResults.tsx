@@ -41,6 +41,52 @@ function monthYear(ts: number): string {
 }
 
 export default function TopicResults({ results, keyword, stats }: Props) {
+  // Trend mode: a themes report over everything recent — no customer list
+  if (stats?.mode === 'trend') {
+    return (
+      <div className="mt-6 w-full max-w-2xl">
+        <div className="mb-3 flex gap-3">
+          <StatCard value={stats.matchedConversations} label="Conversations analyzed" />
+          <StatCard value={stats.uniqueCustomers} label="Customers involved" />
+          <StatCard value={stats.rawMentions} label={`Total in last ${stats.windowDays} days`} />
+        </div>
+        <div className="rounded-lg border border-zen-100 bg-zen-50 px-4 py-3">
+          <div className="mb-2 flex items-center gap-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-zen-700">
+              What customers have been talking about
+            </p>
+            {stats.earliest && stats.latest && (
+              <span className="ml-auto text-xs text-zen-600">
+                {monthYear(stats.earliest)} – {monthYear(stats.latest)}
+              </span>
+            )}
+          </div>
+          {stats.issueSummary && (
+            <p className="text-sm leading-relaxed text-zen-800">{stats.issueSummary}</p>
+          )}
+          {stats.themes.length > 0 && (
+            <ul className="mt-2 space-y-1">
+              {stats.themes.map((t) => (
+                <li key={t} className="flex gap-2 text-sm text-zen-800">
+                  <span className="text-zen-500">•</span>
+                  <span>{t}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {stats.truncated && (
+            <p className="mt-2 text-xs text-zen-600">
+              Analyzed the {stats.matchedConversations} most recent of {stats.rawMentions} conversations in this window.
+            </p>
+          )}
+        </div>
+        <p className="mt-3 text-xs text-gray-400">
+          Tip: to dig into any theme, search it directly — e.g. "customers complaining about payroll".
+        </p>
+      </div>
+    )
+  }
+
   if (results.length === 0) {
     return (
       <div className="mt-6 w-full max-w-2xl rounded-xl border border-gray-200 bg-white px-6 py-10 text-center shadow-sm">
