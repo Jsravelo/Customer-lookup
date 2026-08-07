@@ -272,7 +272,14 @@ export async function getConversationById(id: string): Promise<IntercomConversat
   }
   allMessages.push(...parts.map(mapMessage))
 
-  const preview = allMessages[0]?.body?.slice(0, 120) ?? ''
+  // Keep only real messages. Intercom threads are full of body-less
+  // bookkeeping parts (fin_guidance_applied, assignments, attribute updates)
+  // that render as bare "ZenBot + timestamp" rows.
+  const meaningful = allMessages.filter(
+    (m) => m.body && (m.type === 'comment' || m.type === 'note')
+  )
+
+  const preview = meaningful[0]?.body?.slice(0, 120) ?? ''
 
   return {
     id: id,
@@ -284,6 +291,6 @@ export async function getConversationById(id: string): Promise<IntercomConversat
     assignedTo: assignee?.name ?? null,
     tags: ((raw.tags as { tags?: { name: string }[] } | null)?.tags ?? []).map((t) => t.name),
     preview,
-    messages: allMessages,
+    messages: meaningful,
   }
 }
