@@ -3,6 +3,16 @@
 All notable changes to the Customer Lookup tool. Versions follow [semver](https://semver.org):
 major = breaking/architectural change, minor = new feature, patch = fix.
 
+## 1.4.0 — 2026-08-04
+
+- **Added:** call activity in the status strip — calls held (with last call
+  date), demo/optimization calls booked, and a warning chip for no-shows and
+  cancellations. Combined from Fathom recordings, the Slack call-summary and
+  demo-signup channels, and connected Close call logs, without double-counting
+- **Security:** live Slack search restricted to public channels in code
+  (deny-by-default), locked in with tests — DMs, group DMs, and private
+  channels never surface even though the whole team searches through one token
+
 ## 1.3.0 — 2026-08-04
 
 - **Added:** trend mode in "Who Asked About…" — questions like "what have

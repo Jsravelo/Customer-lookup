@@ -1,5 +1,13 @@
 import type { IntercomContact } from '@/types/customer'
-import { cachedBilling, cachedConversations, cachedCompany, cachedLead } from '@/lib/cached'
+import {
+  cachedBilling,
+  cachedConversations,
+  cachedCompany,
+  cachedLead,
+  cachedFathom,
+  cachedSlack,
+} from '@/lib/cached'
+import { classifyCallSignals } from '@/lib/calls'
 
 // Stable workspace id from the Intercom API (/me → app.id_code)
 const INTERCOM_APP_ID = '6b27cdb7860d5024f49af6dc8c64484ccbb3eaf9'
@@ -32,12 +40,20 @@ function num(attrs: Record<string, string | number | boolean | null>, key: strin
 
 export default async function StatusStrip({ contact }: { contact: IntercomContact }) {
   const email = contact.email
-  const [billing, conversations, company, lead] = await Promise.all([
+  const [billing, conversations, company, lead, fathom, slack] = await Promise.all([
     email ? cachedBilling(email) : null,
     cachedConversations(contact.id),
     cachedCompany(contact.id),
     email ? cachedLead(email) : null,
+    email ? cachedFathom(email) : null,
+    email ? cachedSlack(email) : null,
   ])
+
+  const calls = classifyCallSignals(
+    slack,
+    fathom ? fathom.map((c) => c.date) : null,
+    lead ? lead.activities.filter((a) => a.type === 'Call').map((a) => ({ date: a.date, duration: a.duration })) : null
+  )
 
   // Direct links to the customer's record in each source system, styled with
   // each platform's brand color so they read as actions, not metadata
@@ -140,6 +156,19 @@ export default async function StatusStrip({ contact }: { contact: IntercomContac
         ) : null}
         {tenureYears && <Chip label="Years with us" value={tenureYears} />}
         <Chip label="Open conversations" value={String(openConvos)} tone={openConvos > 0 ? 'warn' : 'neutral'} />
+        <Chip
+          label={calls.held > 0 && calls.lastHeldDate ? `Calls held · last ${calls.lastHeldDate}` : 'Calls held'}
+          value={calls.held > 0 ? String(calls.held) : 'None found'}
+          tone={calls.held > 0 ? 'good' : 'neutral'}
+        />
+        {calls.booked > 0 && <Chip label="Calls booked" value={String(calls.booked)} />}
+        {calls.noShows + calls.cancelled > 0 && (
+          <Chip
+            label="No-shows / cancelled calls"
+            value={`${calls.noShows} · ${calls.cancelled}`}
+            tone="warn"
+          />
+        )}
         {billing?.delinquent && <Chip label="Billing" value="Delinquent" tone="bad" />}
         {sub?.cancelAtPeriodEnd && <Chip label="Cancellation" value={`Scheduled ${sub.currentPeriodEnd}`} tone="bad" />}
         {lastFailedCharge && <Chip label="Failed charge" value={lastFailedCharge.created} tone="warn" />}
