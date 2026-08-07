@@ -11,6 +11,30 @@ export interface SlackMessage {
   permalink: string
 }
 
+export interface SlackChannelInfo {
+  is_channel?: boolean
+  is_private?: boolean
+  is_im?: boolean
+  is_mpim?: boolean
+  is_group?: boolean
+}
+
+/**
+ * SECURITY: the user token searches with the visibility of whoever installed
+ * the Slack app, but the whole team uses this tool. Only PUBLIC channels may
+ * surface — never DMs, group DMs, or private channels. Deny by default:
+ * anything not positively identified as a public channel is dropped.
+ */
+export function isPublicChannel(channel: SlackChannelInfo | undefined): boolean {
+  return (
+    channel?.is_channel === true &&
+    !channel.is_private &&
+    !channel.is_im &&
+    !channel.is_mpim &&
+    !channel.is_group
+  )
+}
+
 /**
  * Returns null when Slack is not configured at all. Prefers the live API
  * (SLACK_USER_TOKEN); falls back to a local workspace export folder
@@ -42,30 +66,14 @@ export async function searchSlack(query: string, count = 30): Promise<SlackMessa
     text?: string
     username?: string
     user?: string
-    channel?: {
-      name?: string
-      is_channel?: boolean
-      is_private?: boolean
-      is_im?: boolean
-      is_mpim?: boolean
-      is_group?: boolean
-    }
+    channel?: SlackChannelInfo & { name?: string }
     ts: string
     permalink?: string
   }
 
-  // SECURITY: the user token searches with the visibility of whoever
-  // installed the Slack app, but the whole team uses this tool. Only surface
-  // PUBLIC channels — never DMs, group DMs, or private channels, even though
-  // the token holder can see them.
-  const isPublicChannel = (m: RawMatch) =>
-    m.channel?.is_channel === true &&
-    !m.channel.is_private &&
-    !m.channel.is_im &&
-    !m.channel.is_mpim &&
-    !m.channel.is_group
-
-  return ((data.messages?.matches ?? []) as RawMatch[]).filter(isPublicChannel).map((m) => ({
+  return ((data.messages?.matches ?? []) as RawMatch[])
+    .filter((m) => isPublicChannel(m.channel))
+    .map((m) => ({
     text: (m.text ?? '').slice(0, 1200),
     from: m.username ?? m.user ?? 'unknown',
     channel: m.channel?.name ?? 'unknown',
