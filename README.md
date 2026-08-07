@@ -17,7 +17,7 @@ Create `.env.local` (gitignored — never commit it) with:
 | `STRIPE_SECRET_KEY` | ✅ | Stripe Dashboard → Developers → API keys (restricted key is fine) |
 | `ANTHROPIC_API_KEY` | ✅ | platform.claude.com → API keys |
 | `FATHOM_API_KEY` | optional | Fathom → User Settings → API Access |
-| `SLACK_USER_TOKEN` | optional | Slack app with `search:read` user scope (live Slack search) |
+| `SLACK_USER_TOKEN` | optional | Slack app with `search:read` user scope (live Slack search — **public channels only**: DMs, group DMs, and private channels are filtered out in code regardless of the token holder's visibility) |
 | `SITE_PASSWORD` | optional | Any value — activates the site-wide password gate |
 | `BLOB_READ_WRITE_TOKEN` | optional | Vercel → Storage → Blob (shared brief cache) |
 

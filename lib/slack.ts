@@ -42,11 +42,30 @@ export async function searchSlack(query: string, count = 30): Promise<SlackMessa
     text?: string
     username?: string
     user?: string
-    channel?: { name?: string }
+    channel?: {
+      name?: string
+      is_channel?: boolean
+      is_private?: boolean
+      is_im?: boolean
+      is_mpim?: boolean
+      is_group?: boolean
+    }
     ts: string
     permalink?: string
   }
-  return ((data.messages?.matches ?? []) as RawMatch[]).map((m) => ({
+
+  // SECURITY: the user token searches with the visibility of whoever
+  // installed the Slack app, but the whole team uses this tool. Only surface
+  // PUBLIC channels — never DMs, group DMs, or private channels, even though
+  // the token holder can see them.
+  const isPublicChannel = (m: RawMatch) =>
+    m.channel?.is_channel === true &&
+    !m.channel.is_private &&
+    !m.channel.is_im &&
+    !m.channel.is_mpim &&
+    !m.channel.is_group
+
+  return ((data.messages?.matches ?? []) as RawMatch[]).filter(isPublicChannel).map((m) => ({
     text: (m.text ?? '').slice(0, 1200),
     from: m.username ?? m.user ?? 'unknown',
     channel: m.channel?.name ?? 'unknown',
