@@ -15,6 +15,7 @@ export default function BriefCard({ email, contactId }: { email: string; contact
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const [expanded, setExpanded] = useState(false)
+  const [checked, setChecked] = useState(false)
   const startedRef = useRef(false)
 
   const generate = useCallback(async () => {
@@ -66,6 +67,8 @@ export default function BriefCard({ email, contactId }: { email: string; contact
     }
   }, [email, contactId])
 
+  // Load a cached brief if one exists — never auto-generate (that's a
+  // deliberate token spend, so it stays behind the Generate button)
   useEffect(() => {
     if (startedRef.current) return
     startedRef.current = true
@@ -76,14 +79,14 @@ export default function BriefCard({ email, contactId }: { email: string; contact
         if (data.brief) {
           setBrief(data.brief)
           setUpdatedAt(data.updatedAt ?? null)
-        } else {
-          await generate()
         }
       } catch {
-        await generate()
+        // no cached brief — wait for the user to click Generate
+      } finally {
+        setChecked(true)
       }
     })()
-  }, [contactId, generate])
+  }, [contactId])
 
   async function copyBrief() {
     if (!brief) return
@@ -118,6 +121,20 @@ export default function BriefCard({ email, contactId }: { email: string; contact
       </div>
 
       <div className="px-4 py-3">
+        {!brief && !generating && checked && !error && (
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm text-gray-500">
+              No brief yet. Generate compiles Stripe, Intercom, Close, Slack &amp; Fathom into one
+              summary — takes 30–60 seconds and is cached for the whole team afterwards.
+            </p>
+            <button
+              onClick={generate}
+              className="shrink-0 rounded-md bg-zen-500 px-3 py-1.5 text-sm font-semibold text-white hover:bg-zen-600"
+            >
+              Generate brief
+            </button>
+          </div>
+        )}
         {generating && (
           <div className="inline-flex items-center gap-2 rounded-lg bg-gray-100 px-3 py-2 text-sm text-gray-500">
             <span className="h-2 w-2 animate-pulse rounded-full bg-zen-500" />
